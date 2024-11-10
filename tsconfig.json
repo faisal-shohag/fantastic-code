@@ -15,6 +15,7 @@
     "incremental": true,
     "useUnknownInCatchVariables": false,
     "noImplicitAny": false,
+
     "plugins": [
       {
         "name": "next"

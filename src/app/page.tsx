@@ -4,9 +4,12 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
 export default function CodeExecutor() {
   const [code, setCode] = useState('')
+  const [language, setLanguage] = useState('javascript')
   const [result, setResult] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -17,7 +20,7 @@ export default function CodeExecutor() {
     setResult('')
     setError('')
     try {
-      const response = await fetch('/api/execute', {
+      const response = await fetch(`/api/compiler/${language}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,7 +31,8 @@ export default function CodeExecutor() {
       if (response.ok) {
         setResult(data.result)
       } else {
-        setError(data.error || 'An unknown error occurred')
+        console.log(data)
+        setError(data.stack || 'An unknown error occurred')
       }
     } catch (error) {
       setError(`Network error: ${error.message}`)
@@ -40,20 +44,33 @@ export default function CodeExecutor() {
     <div className="container mx-auto p-4">
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>JavaScript Code Executor</CardTitle>
+          <CardTitle>Code Executor</CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Language</Label>
+              <RadioGroup defaultValue="javascript" onValueChange={setLanguage} className="flex space-x-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="javascript" id="javascript" />
+                  <Label htmlFor="javascript">JavaScript</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="typescript" id="typescript" />
+                  <Label htmlFor="typescript">TypeScript</Label>
+                </div>
+              </RadioGroup>
+            </div>
             <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                Enter your JavaScript code:
-              </label>
+              <Label htmlFor="code" className="block text-sm font-medium mb-1">
+                Enter your {language === 'javascript' ? 'JavaScript' : 'TypeScript'} code:
+              </Label>
               <Textarea
                 id="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 rows={10}
-                placeholder="console.log('Hello, World!');"
+                placeholder={language === 'javascript' ? "console.log('Hello, World!');" : "const greeting: string = 'Hello, World!';\nconsole.log(greeting);"}
                 className="w-full"
               />
             </div>
