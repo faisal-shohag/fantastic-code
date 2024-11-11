@@ -6,7 +6,7 @@ import Timer from "./Timer";
 
 const SolutionHead = ({onRun, onSubmit}) => {
     return (
-      <div className="p-2 dark:bg-zinc-800 flex justify-between items-center px-3 text-zinc-400">
+      <div className="p-2 bg-zinc-800 flex justify-between items-center px-3 text-zinc-400">
         
         <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">

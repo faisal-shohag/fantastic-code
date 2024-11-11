@@ -12,14 +12,14 @@ const ProblemLayout = ({children}) => {
   return (
     <>
      <TimerProvider>
-      <div className="p-2">sjash</div>
-      <div className="h-screen pb-12 px-1 fixed w-full">
+     
+      <div className="h-screen pb-16 px-1 fixed w-full">
         <ResizablePanelGroup
           direction="horizontal"
           className="w-full rounded-lg "
         >
           <ResizablePanel defaultSize={50}>
-            <div className="border dark:bg-zinc-900 h-full rounded-lg">
+            <div className="border dark:bg-zinc-900 h-full rounded-lg overflow-hidden">
              <ProblemNavBar/>
              {children}
             </div>

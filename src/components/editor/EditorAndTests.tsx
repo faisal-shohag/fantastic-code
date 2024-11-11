@@ -29,7 +29,7 @@ const EditorAndTests = () => {
         <ResizablePanel className="" defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={70}>
-            <div className="border overflow-hidden rounded-lg dark:bg-zinc-900 h-full">
+            <div className="border overflow-hidden rounded-lg bg-zinc-900 h-full">
             <SolutionHead onRun={onRun} onSubmit={onSubmit}/>
               <CodeEditor onChange={onChange} />
             </div>
@@ -41,7 +41,7 @@ const EditorAndTests = () => {
           />
           <ResizablePanel defaultSize={30}>
             <div className="border overflow-hidden h-full dark:bg-zinc-900 rounded-lg">
-              <div className="p-2 dark:bg-zinc-800 flex items-center gap-2 px-3">
+              <div className="p-2 bg-slate-300 dark:bg-zinc-800 flex items-center gap-2 px-3">
                 <TestTubeDiagonalIcon
                   size={17}
                   className="text-green-500"
