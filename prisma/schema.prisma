@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,3 +8,223 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Problem {
+  id          Int         @id @default(autoincrement())
+  title String
+  unique_title       String      @unique
+  description String
+  difficulty  DifficultyLevel
+  tags        TagsOnProblems[]
+  companies   CompaniesOnProblems[]
+  editorials  Editorial[]
+  solutions   Solution[]
+  submissions Submission[]
+  hints       Hint[]
+  defaultCode String
+  TestCases   TestCase[]
+  likes       Like[]
+  comments    Comment[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Tag {
+  id       Int              @id @default(autoincrement())
+  name     String           @unique
+  problems TagsOnProblems[]
+}
+
+model TagsOnProblems {
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+  tag       Tag     @relation(fields: [tagId], references: [id])
+  tagId     Int
+
+  @@id([problemId, tagId])
+  @@index([tagId])
+}
+
+model Company {
+  id       Int                   @id @default(autoincrement())
+  name     String                @unique
+  problems CompaniesOnProblems[]
+}
+
+model CompaniesOnProblems {
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+
+  @@id([problemId, companyId])
+  @@index([companyId])
+}
+
+model Editorial {
+  id        Int     @id @default(autoincrement())
+  content   String
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+}
+
+model Solution {
+  id        Int     @id @default(autoincrement())
+  code      String
+  language  String
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+}
+
+model Submission {
+  id        Int             @id @default(autoincrement())
+  status    SubmissionStatus
+  date      DateTime        @default(now())
+  language  String
+  runtime   Float?
+  memory    Float?
+  problem   Problem         @relation(fields: [problemId], references: [id])
+  problemId Int
+  user      User           @relation(fields: [userId], references: [id])
+  userId    Int
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  WRONG_ANSWER
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  username    String        @unique
+  email String @unique
+  name String
+  bio String?
+  photoURL String?
+  institution String?
+  website   String?
+  github String?
+  linkedin String?
+  x String?
+  gender String?
+  location String?
+  birthday String?
+  skills Skills[]
+  works Works[]
+  educations Educations[]
+  submissions Submission[]
+  likes       Like[]
+  comments    Comment[]
+  commentLikes CommentLike[]
+  replyLikes   ReplyLike[]
+}
+
+model Skills {
+  id          Int           @id @default(autoincrement())
+  name String
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Works {
+  id          Int           @id @default(autoincrement())
+  company String
+  title String
+  isPresent Boolean @default(false)
+  startDate DateTime?
+  endDate DateTime?
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Educations {
+  id          Int           @id @default(autoincrement())
+  school String
+  degree String
+  isPresent Boolean @default(false)
+  startDate DateTime?
+  endDate DateTime?
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+
+model Like {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+
+  @@unique([userId, problemId])
+}
+
+model Comment {
+  id        Int           @id @default(autoincrement())
+  content   String
+  user      User         @relation(fields: [userId], references: [id])
+  userId    Int
+  problem   Problem      @relation(fields: [problemId], references: [id])
+  problemId Int
+  createdAt DateTime     @default(now())
+  replies   Reply[]      
+  likes     CommentLike[]
+}
+
+model Reply {
+  id        Int          @id @default(autoincrement())
+  content   String
+  comment   Comment      @relation(fields: [commentId], references: [id])
+  commentId Int
+  createdAt DateTime     @default(now())
+  likes     ReplyLike[]
+}
+
+model CommentLike {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  comment   Comment @relation(fields: [commentId], references: [id])
+  commentId Int
+
+  @@unique([userId, commentId])
+}
+
+model ReplyLike {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  reply     Reply   @relation(fields: [replyId], references: [id])
+  replyId   Int
+
+  @@unique([userId, replyId])
+}
+
+model Hint {
+  id        Int     @id @default(autoincrement())
+  content   String
+  problem   Problem @relation(fields: [problemId], references: [id])
+  problemId Int
+}
+
+model TestCase {
+  id        Int         @id @default(autoincrement())
+  input     String
+  output    String
+  problem   Problem     @relation(fields: [problemId], references: [id])
+  problemId Int
+  type      TestCaseType
+}
+
+enum TestCaseType {
+  RUN
+  SUBMIT
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}

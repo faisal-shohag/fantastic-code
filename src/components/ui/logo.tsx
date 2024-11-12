@@ -6,7 +6,7 @@ interface LogoProps {
   height?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ color = "#000000", width = "100%", height = "100%" }) => (
+const Logo: React.FC<LogoProps> = ({ width = "100%", height = "100%" }) => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
