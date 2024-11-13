@@ -1,6 +1,6 @@
 "use client"
 
-import Editor, {useMonaco, loader} from '@monaco-editor/react'
+import Editor from '@monaco-editor/react'
 import {
     CustomSelect,
     CustomSelectContent,
