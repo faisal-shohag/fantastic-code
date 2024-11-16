@@ -1,8 +1,9 @@
+import ProblemList from "./problem-list";
 
 const Problems = () => {
     return (
         <div>
-            Problems
+            <ProblemList/>
         </div>
     );
 };

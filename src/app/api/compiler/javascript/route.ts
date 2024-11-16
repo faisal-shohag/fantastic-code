@@ -12,6 +12,9 @@ type Result = {
   stdout?: string[];
   error?: string;
   stack?: string;
+  isTestCasePassed: boolean;
+  answer: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error";
+  runtime: number;
 };
 
 export async function POST(req: NextRequest) {
@@ -21,6 +24,8 @@ export async function POST(req: NextRequest) {
 
   for (const testCase of testCases) {
     try {
+      const startTime = performance.now();
+
       let stdout = '';
       const customConsole = {
         log: (...args: unknown[]) => {
@@ -28,28 +33,44 @@ export async function POST(req: NextRequest) {
         },
       };
 
+      // Create a context with the array directly
       const context = {
         console: customConsole,
-        ...testCase.context
+        input: testCase.context.input  // Direct array assignment
       };
 
       vm.createContext(context);
 
-      const script = new vm.Script(`(${code})`);
-      const func = script.runInContext(context);
+      const script = new vm.Script(`
+        (function() {
+          const userFunction = ${code};
+          return userFunction(${context.input});
+        })()
+      `);
 
-      const result = func();
+      const result = script.runInContext(context);
+      const endTime = performance.now();
+      console.log(result, testCase.expected)
+
+      const isTestCasePassed = result.toString() == testCase.expected;
+      const answer = isTestCasePassed ? "Accepted" : "Wrong Answer";
 
       results.push({
         testCase,
         result,
-        stdout: stdout.trim() ? stdout.trim().split('\n') : []
+        stdout: stdout.trim() ? stdout.trim().split('\n') : [],
+        isTestCasePassed,
+        answer,
+        runtime: Math.round(endTime - startTime)
       });
     } catch (error: unknown) {
       const errorResult: Result = {
         testCase,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        isTestCasePassed: false,
+        answer: error instanceof Error && error.message.includes('Syntax') ? "Compilation Error" : "Runtime Error",
+        runtime: 0
       };
       results.push(errorResult);
 
@@ -59,6 +80,6 @@ export async function POST(req: NextRequest) {
       }
     }
   }
-
+  
   return NextResponse.json(results);
 }

@@ -85,6 +85,14 @@ body {
   }
 }
 
+.section {
+  max-width: 1280px;
+  margin: 0 auto;
+  @apply pl-1 pr-1
+  /* text-align: center; */
+  /* height: 100vh; */;
+}
+
 
 .monaco-editor{
   padding-top: 5px;
@@ -98,4 +106,24 @@ body {
   backdrop-filter: blur(6.4px);
   -webkit-backdrop-filter: blur(6.4px);
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.wmde-markdown{
+  @apply dark:bg-zinc-950
+}
+
+.wmde-markdown ol, ul, menu {
+  list-style: outside;
+  margin: 0;
+  padding: 0;
+}
+
+.wmde-markdown code {
+  background-color: #72777231 !important; 
+  
+  @apply dark:text-white border
+}
+
+.wmde-markdown blockquote{
+  border-left: .17em solid !important;
 }
