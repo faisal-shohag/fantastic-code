@@ -20,7 +20,7 @@ export default function CodeExecutor() {
     setResult('')
     setError('')
     try {
-      const response = await fetch(`/api/execution/python-v3`, {
+      const response = await fetch(`https://python-execution.vercel.app/python`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

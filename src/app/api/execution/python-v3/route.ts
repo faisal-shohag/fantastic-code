@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
 async function getPythonVersion(): Promise<string> {
   return new Promise((resolve, reject) => {
-    const python = spawn('python', ['--version']);
+    const python = spawn('python3', ['--version']);
     let version = '';
 
     python.stdout.on('data', (data) => {
