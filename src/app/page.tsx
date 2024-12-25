@@ -101,7 +101,7 @@ export default function CodeExecutor() {
             <CardTitle>{error ? 'Error' : 'Result'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className={`p-4 rounded-md overflow-x-auto ${error ? 'bg-red-100 text-red-800' : 'bg-gray-100'}`}>
+            <pre className={`p-4 rounded-md overflow-x-auto ${error ? 'bg-red-100 text-red-800' : 'bg-gray-100 dark:bg-zinc-900'}`}>
               {error || result}
             </pre>
           </CardContent>
