@@ -5,6 +5,7 @@ type PythonResponse = {
   stdout: string[];
   error?: string;
   runtime: number;
+  pythonVersion?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No code provided' }, { status: 400 });
     }
 
+    // Get Python version
+    const pythonVersion = await getPythonVersion();
+    
     const wrappedCode = generateWrappedCode(code);
     const result = await executePythonCode(wrappedCode);
     const endTime = performance.now();
@@ -24,6 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ...result,
       result: result.stdout,
+      pythonVersion,
       runtime: Math.round(endTime - startTime),
     });
   } catch (error) {
@@ -37,6 +42,29 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function getPythonVersion(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const python = spawn('python', ['--version']);
+    let version = '';
+
+    python.stdout.on('data', (data) => {
+      version += data.toString();
+    });
+
+    python.stderr.on('data', (data) => {
+      version += data.toString();
+    });
+
+    python.on('close', () => {
+      resolve(version.trim());
+    });
+
+    python.on('error', (error) => {
+      reject(error);
+    });
+  });
 }
 
 async function executePythonCode(code: string): Promise<PythonResponse> {
