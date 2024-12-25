@@ -20,7 +20,7 @@ export default function CodeExecutor() {
     setResult('')
     setError('')
     try {
-      const response = await fetch(`/api/compiler/${language}`, {
+      const response = await fetch(`/api/execution/python-v3`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,11 +28,19 @@ export default function CodeExecutor() {
         body: JSON.stringify({ code }),
       })
       const data = await response.json()
+      console.log(data)
+      
+      if(data.error){
+        setError(data.error)
+        setIsLoading(false)
+        return
+      }
       if (response.ok) {
+     
         setResult(data.result)
       } else {
         console.log(data)
-        setError(data.stack || 'An unknown error occurred')
+        setError(data.error || 'An unknown error occurred')
       }
     } catch (error) {
       setError(`Network error: ${error.message}`)
@@ -58,6 +66,11 @@ export default function CodeExecutor() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="typescript" id="typescript" />
                   <Label htmlFor="typescript">TypeScript</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="python" id="typescript" />
+                  <Label htmlFor="python">Python</Label>
                 </div>
               </RadioGroup>
             </div>
