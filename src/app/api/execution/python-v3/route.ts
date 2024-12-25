@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
 async function executePythonCode(code: string): Promise<PythonResponse> {
   return new Promise((resolve, reject) => {
-    const python = spawn('python3', ['-c', code]);
+    const python = spawn('python', ['-c', code]);
     let stdout = '';
     let stderr = '';
 
