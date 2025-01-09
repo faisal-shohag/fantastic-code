@@ -1,10 +1,15 @@
 @import url('https://fonts.cdnfonts.com/css/gg-sans-2');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
+  font-family: "Inter", serif;
+}
+
+.font-gg-normal {
   font-family: 'gg sans Normal', sans-serif;
 }
 
@@ -109,7 +114,7 @@ body {
 }
 
 .wmde-markdown{
-  @apply dark:bg-zinc-950
+  @apply dark:bg-zinc-900
 }
 
 .wmde-markdown ol, ul, menu {
@@ -121,9 +126,36 @@ body {
 .wmde-markdown code {
   background-color: #72777231 !important; 
   
-  @apply dark:text-white border
+  @apply dark:text-white 
 }
 
 .wmde-markdown blockquote{
   border-left: .17em solid !important;
+}
+
+
+.wmde-markdown p {
+  margin-bottom:  10px !important;
+}
+
+.readonly-line {
+  /* background-color: green; */
+  pointer-events: none;
+  position: relative;
+  /* z-index: 99999; */
+  
+}
+
+.readonly-line::before{
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  width: 100%;
+  height: 20px;
+  /* background-color: red; */
+}
+
+.view-lines div:nth-child(1){
+  background-color: red !important;
+  pointer-events: none;
 }

@@ -1,15 +1,14 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import useSWR from 'swr'
+import { useQuery } from 'react-query'
 import { ProblemData } from '@/lib/types'
-import { fetcher } from '@/lib/fetcher'
 
 interface ProblemContextType {
   problem: ProblemData | undefined
   isLoading: boolean
-  error: Error | undefined
-  mutate: () => void
+  error: Error | null  // Changed from Error | undefined to Error | null
+  refetch: () => void
 }
 
 const ProblemContext = createContext<ProblemContextType | undefined>(undefined)
@@ -22,18 +21,23 @@ export const useProblem = () => {
   return context
 }
 
-// interface ProblemProviderProps {
-//   children: ReactNode
-//   problemId: string
-// }
+
+
+const fetchProblem = async (problemId: string): Promise<ProblemData> => {
+  const response = await fetch(`/api/problems/${problemId}`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch problem')
+  }
+  return response.json()
+}
 
 export function ProblemProvider({ children, problemId }) {
-  const { data, error, isLoading, mutate } = useSWR<ProblemData>(
-    `/api/problems/${problemId}`,
-    fetcher,
+  const { data, error, isLoading, refetch } = useQuery<ProblemData, Error>(
+    ['problem', problemId],
+    () => fetchProblem(problemId),
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     }
   )
 
@@ -42,8 +46,8 @@ export function ProblemProvider({ children, problemId }) {
       value={{
         problem: data,
         isLoading,
-        error,
-        mutate,
+        error: error,  // react-query returns Error | null
+        refetch,
       }}
     >
       {children}

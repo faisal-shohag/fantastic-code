@@ -124,7 +124,7 @@ export async function GET(
                 content: true,
               },
             },
-            TestCases: true,
+            testCases: true,
             author: {
               select: {
                 id: true,

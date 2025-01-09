@@ -1,7 +1,11 @@
 'use client'
 
+import { useQuery, QueryFunction } from 'react-query'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Pagination,
   PaginationContent,
@@ -9,14 +13,13 @@ import {
   PaginationLink,
   PaginationPrevious,
   PaginationNext,
-  PaginationEllipsis,
 } from '@/components/ui/pagination'
 import Link from 'next/link'
-import useSWR from 'swr'
-import { useState } from 'react'
+import { ChevronRight, Trophy } from 'lucide-react'
 
 interface Problem {
   id: number
+  serial: number
   unique_title: string
   title: string
   difficulty: string
@@ -29,116 +32,161 @@ interface PaginatedResponse {
   totalPages: number
 }
 
-// Fetch function for SWR
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetchProblems: QueryFunction<PaginatedResponse, [string, number]> = async ({ 
+  queryKey 
+}) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, page] = queryKey
+  const response = await fetch(`/api/problems?page=${page}&limit=10`)
+  if (!response.ok) {
+    throw new Error('Network response was not ok')
+  }
+  return response.json()
+}
+
+
+const difficultyColor = {
+  EASY: 'bg-green-500',
+  MEDIUM: 'bg-yellow-500',
+  HARD: 'bg-red-500'
+}
 
 export default function ProblemList() {
   const [page, setPage] = useState(1)
-  
-  // Using SWR for data fetching
-  const { data, error, isLoading } = useSWR<PaginatedResponse>(
-    `/api/problems?page=${page}&limit=10`,
-    fetcher
-  )
-
-  // Handle loading state
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i} className="shadow-md animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-2/3" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <div className="h-4 bg-gray-200 rounded w-16" />
-                    <div className="h-4 bg-gray-200 rounded w-16" />
-                  </div>
-                  <div className="h-4 bg-gray-200 rounded w-24" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Handle error state
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <Card className="shadow-md bg-red-50">
-          <CardContent className="p-4">
-            <p className="text-red-600">Error loading problems. Please try again later.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  const { data, error, isLoading } = useQuery(['problems', page], fetchProblems, {
+    keepPreviousData: true,
+  })
 
   const problems = data?.problems || []
   const totalPages = data?.totalPages || 1
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Problem List</h2>
-      <div className="space-y-4">
-        {problems.map(problem => (
-          <Card key={problem.id} className="shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                <Link href={`/problems/${problem.unique_title}`}>{problem.title}</Link> 
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {problem.tags.map(({ tag }) => (
-                  <Badge key={tag.name}>{tag.name}</Badge>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {problem.companies.map(({ company }) => (
-                  <Badge variant="secondary" key={company.name}>
-                    {company.name}
-                  </Badge>
-                ))}
-              </div>
-              <div>
-                <Badge variant="outline">{problem.difficulty}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="container mx-auto p-4  min-h-screen">
+     
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <AnimatePresence>
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <motion.div
+                  key={`skeleton-${index}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <ProblemSkeleton />
+                </motion.div>
+              ))
+            : problems.map((problem, index) => (
+                <motion.div
+                  key={problem.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <ProblemCard problem={problem} />
+                </motion.div>
+              ))}
+        </AnimatePresence>
       </div>
-
-      {/* Pagination Component */}
-      <Pagination className="mt-6">
-        <PaginationPrevious
-          onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-          disabled={page === 1}
-        />
+      {error instanceof Error && (
+        <Card className="mt-4 bg-red-50 border-red-200">
+          <CardContent className="p-4">
+            <p className="text-red-600">Error loading problems. Please try again later.</p>
+          </CardContent>
+        </Card>
+      )}
+      <Pagination className="mt-8">
         <PaginationContent>
-          {Array.from({ length: totalPages }, (_, index) => (
-            <PaginationItem key={index}>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+            />
+          </PaginationItem>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <PaginationItem key={i}>
               <PaginationLink
-                isActive={page === index + 1}
-                onClick={() => setPage(index + 1)}
+                isActive={page === i + 1}
+                onClick={() => setPage(i + 1)}
               >
-                {index + 1}
+                {i + 1}
               </PaginationLink>
             </PaginationItem>
           ))}
-          {totalPages > 5 && page < totalPages - 3 && <PaginationEllipsis />}
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+            />
+          </PaginationItem>
         </PaginationContent>
-        <PaginationNext
-          onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={page === totalPages}
-        />
       </Pagination>
     </div>
   )
 }
+
+function ProblemCard({ problem }: { problem: Problem }) {
+  return (
+    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold flex items-center justify-between">
+          <Link href={`/problems/${problem.unique_title}`} className="hover:text-indigo-600 transition-colors">
+            {problem.serial}. {problem.title}
+          </Link>
+          <Badge className={`${difficultyColor[problem.difficulty as keyof typeof difficultyColor]} text-white`}>
+            {problem.difficulty}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {problem.tags.slice(0, 3).map(({ tag }) => (
+            <Badge key={tag.name} variant="secondary" className="bg-indigo-100 text-indigo-800">
+              {tag.name}
+            </Badge>
+          ))}
+          {problem.tags.length > 3 && (
+            <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+              +{problem.tags.length - 3}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center space-x-2">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm text-gray-600">+50 XP</span>
+          </div>
+          <Button variant="outline" size="sm" className="text-indigo-600 border-indigo-600 hover:bg-indigo-50">
+            Solve <ChevronRight className="ml-2 w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ProblemSkeleton() {
+  return (
+    <Card className="shadow-md animate-pulse">
+      <CardHeader className="pb-2">
+        <div className="h-6 bg-gray-200 rounded w-3/4" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <div className="h-5 bg-gray-200 rounded w-16" />
+            <div className="h-5 bg-gray-200 rounded w-16" />
+            <div className="h-5 bg-gray-200 rounded w-16" />
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="h-4 bg-gray-200 rounded w-20" />
+            <div className="h-8 bg-gray-200 rounded w-24" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+

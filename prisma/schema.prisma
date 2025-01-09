@@ -10,6 +10,7 @@ datasource db {
 
 model Problem {
   id          Int         @id @default(autoincrement())
+  serial Int
   title String
   unique_title       String      @unique
   description String
@@ -21,7 +22,8 @@ model Problem {
   submissions Submission[]
   hints       Hint[]
   defaultCode Json
-  TestCases   TestCase[]
+  testCases   TestCase[]
+  func String?
   author User @relation(references: [id], fields: [userId], onDelete: Cascade)
   userId String
   likes       Like[]

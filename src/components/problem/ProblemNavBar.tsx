@@ -5,12 +5,12 @@ import { IoBookOutline, IoFlask } from "react-icons/io5";
 import { LuHistory } from "react-icons/lu";
 import { usePathname } from "next/navigation";
 
-const ProblemNavBar = () => {
+const ProblemNavBar = ({problemName}) => {
     const path = usePathname()
-    const problemName = path.split('/')[1]
+
     
     const pathNames = {
-        '/': `/problems/${path.split('/')[1]}`,
+        '/': `/${path.split('/')[1]}/${problemName}`,
         'editorial': `/problems/${problemName}/editorial`,
         'solutions': `/problems/${problemName}/solutions`,
         'submissions': `/problems/${problemName}/submissions`,

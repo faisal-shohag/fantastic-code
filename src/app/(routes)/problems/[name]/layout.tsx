@@ -6,15 +6,15 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import EditorAndTests from "@/components/editor/EditorAndTests"
 import ProblemNavBar from "@/components/problem/ProblemNavBar"
 import { TimerProvider } from "@/providers/timer-provider"
 import { ProblemProvider, useProblem } from '@/providers/problem-provider'
+import ProblemLayoutSkeleton from '@/components/problem/layout-skeleton'
+import ProblemError from '@/components/problem/error'
+import Editor from '@/components/editor2/Editor'
 
 const ProblemLayout = ({ children }) => {
   const params = useParams()
-  
-
   if (!params.name) {
     return <div>Invalid problem ID</div>
   }
@@ -28,20 +28,8 @@ const ProblemLayout = ({ children }) => {
 
 const ProblemLayoutContent = ({ children }) => {
   const { problem, isLoading, error } = useProblem()
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (error) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="text-red-500">
-          Error: {error.message}
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <ProblemLayoutSkeleton/>
+  if (error) return <ProblemError/>
 
   if (!problem) {
     return (
@@ -62,17 +50,19 @@ const ProblemLayoutContent = ({ children }) => {
         >
           <ResizablePanel defaultSize={50}>
             <div className="border dark:bg-zinc-900 h-full rounded-lg overflow-hidden">
-              <ProblemNavBar  />
+              <ProblemNavBar  problemName={problem.unique_title}/>
               {children}
             </div>
           </ResizablePanel>
 
           <ResizableHandle
+          
             className="dark:bg-zinc-950 p-[2px] rounded-xl"
             withHandle
           />
 
-          <EditorAndTests problem={problem} />
+          <Editor problem={problem}/>
+
         </ResizablePanelGroup>
       </div>
     </TimerProvider>

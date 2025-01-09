@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-// Dynamically import MarkdownEditor with ssr disabled
 const MarkdownEditor = dynamic(
   () => import('@uiw/react-markdown-editor').then((mod) => mod.default),
   { ssr: false }
@@ -22,13 +21,15 @@ interface AddProblemFormProps {
 export default function AddProblemForm({ authorId }: AddProblemFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
+    serial: 0,
     title: '',
     description: '',
     difficulty: 'EASY',
-    defaultCode: { javascript: '', typescript: '' },
+    defaultCode: { javascript: '', typescript: '', python: ''},
     tags: '',
     companies: '',
     hints: [''],
+    func: '',
     testCases: [{ input: '', output: '', type: 'RUN' }]
   })
 
@@ -44,7 +45,7 @@ export default function AddProblemForm({ authorId }: AddProblemFormProps) {
     setFormData(prev => ({ ...prev, description: value }))
   }
 
-  const handleDefaultCodeChange = (language: 'javascript' | 'typescript', value: string) => {
+  const handleDefaultCodeChange = (language: 'javascript' | 'typescript' | 'python', value: string) => {
     setFormData(prev => ({
       ...prev,
       defaultCode: { ...prev.defaultCode, [language]: value }
@@ -77,7 +78,7 @@ export default function AddProblemForm({ authorId }: AddProblemFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const uniqueTitle = formData.title.toLowerCase().replace(/\s+/g, '-')
-    
+    console.log(formData)
     const response = await fetch('/api/problems', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -99,6 +100,18 @@ export default function AddProblemForm({ authorId }: AddProblemFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <Label htmlFor="serial">Serial</Label>
+        <Input
+          id="serial"
+          name="serial"
+          value={formData.serial}
+          type='number'
+          onChange={handleChange}
+          required
+        />
+      </div>
+      
       <div>
         <Label htmlFor="title">Title</Label>
         <Input
@@ -154,6 +167,26 @@ export default function AddProblemForm({ authorId }: AddProblemFormProps) {
             required
           />
         </div>
+
+        <div>
+          <Label htmlFor="pythonCode">Python Code</Label>
+          <Textarea
+            id="pythonCode"
+            value={formData.defaultCode.python}
+            onChange={(e) => handleDefaultCodeChange('python', e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="func"> Specify function(specially for python)</Label>
+        <Input
+          id="func"
+          name="func"
+          value={formData.func}
+          onChange={handleChange}
+        />
       </div>
       <div>
         <Label htmlFor="tags">Tags (comma-separated)</Label>

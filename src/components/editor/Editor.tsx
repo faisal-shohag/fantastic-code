@@ -25,11 +25,12 @@ interface CodeEditorProps {
     defaultCode: {
         javascript: string;
         typescript: string;
+        python: string;
     };
 }
 
 const CodeEditor = ({ onChange, defaultCode }: CodeEditorProps) => {
-    const [language, setLanguage] = useState<"javascript" | "typescript">("javascript")
+    const [language, setLanguage] = useState<"javascript" | "typescript" | "python">("python")
 
     const options: editor.IStandaloneEditorConstructionOptions = {
         acceptSuggestionOnCommitCharacter: true,
