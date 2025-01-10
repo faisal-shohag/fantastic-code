@@ -1,12 +1,17 @@
 @import url('https://fonts.cdnfonts.com/css/gg-sans-2');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.maateen.me/kalpurush/font.css');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: "Inter", serif;
+  font-family: Inter,  'Kalpurush', serif;
+}
+
+.font-kalpurush{
+  font-family: 'Kalpurush', sans-serif;
 }
 
 .font-gg-normal {
@@ -114,6 +119,7 @@ body {
 }
 
 .wmde-markdown{
+  font-family: Inter,  'Kalpurush', serif !important;
   @apply dark:bg-zinc-900
 }
 
@@ -131,6 +137,9 @@ body {
 
 .wmde-markdown blockquote{
   border-left: .17em solid !important;
+  background: rgba(70, 222, 141, 0.063);
+  padding-top: 5px !important;
+  padding-bottom: 1px !important;
 }
 
 
@@ -139,23 +148,31 @@ body {
 }
 
 .readonly-line {
-  /* background-color: green; */
+  background-color: green;
   pointer-events: none;
   position: relative;
   /* z-index: 99999; */
-  
 }
 
-.readonly-line::before{
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  width: 100%;
-  height: 20px;
-  /* background-color: red; */
+/* width */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 2px;
+  @apply rounded-lg;
 }
 
-.view-lines div:nth-child(1){
-  background-color: red !important;
-  pointer-events: none;
+/* Track */
+::-webkit-scrollbar-track {
+  @apply dark:bg-zinc-800 bg-slate-100;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  /* background: linear-gradient(45deg, rgb(61, 14, 189), rgb(224, 59, 155)); */
+  @apply dark:bg-zinc-700 bg-slate-200 rounded-full;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

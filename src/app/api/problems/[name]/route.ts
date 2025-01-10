@@ -53,6 +53,7 @@ interface TransformedProblem {
   createdAt: Date
   updatedAt: Date
   userId: string
+  func: string
   tags: Array<{
     id: number
     name: string
@@ -124,7 +125,7 @@ export async function GET(
                 content: true,
               },
             },
-            testCases: true,
+            TestCases: true,
             author: {
               select: {
                 id: true,
@@ -160,6 +161,7 @@ export async function GET(
         companies: problem.companies.map(c => c.company),
         hints: problem.hints,
         author: problem.author,
+        func: problem.func || '',
         testCases: problem.TestCases,
         stats: {
           likes: problem._count.likes,
@@ -167,6 +169,7 @@ export async function GET(
           submissions: problem._count.submissions,
         }
       }
+
   
       return NextResponse.json(transformedProblem)
     } catch (error) {

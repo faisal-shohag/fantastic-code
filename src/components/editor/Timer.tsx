@@ -21,7 +21,7 @@ const Timer = () => {
     <div className="flex items-center gap-2 transition-all duration-500">
       {!isStarted && (
         <span
-          className="bg-zinc-800 flex justify-center items-center px-2 rounded cursor-pointer py-1 transition-transform duration-300 hover:scale-110"
+          className="dark:bg-zinc-800 bg-slate-200 flex justify-center items-center px-2 rounded cursor-pointer py-1 transition-transform duration-300 hover:scale-110"
           onClick={() => {
             start();
             setIsStarted(true);
@@ -31,14 +31,14 @@ const Timer = () => {
         </span>
       )}
       {isStarted && (
-        <div className="flex gap-[2px] items-center">
+        <div className="flex gap-[2px] items-center bg-slate-200 rounded-lg">
           {!isPause ? (
             <div
               onClick={() => {
                 pause();
                 setIsPause(true);
               }}
-              className="cursor-pointer w-[35px] h-[25px] bg-zinc-900 flex justify-center items-center px-1 rounded "
+              className="cursor-pointer w-[35px] h-[25px] dark:bg-zinc-900 flex justify-center items-center px-1 rounded "
             >
               <BsFillPauseFill size={20} />
             </div>
@@ -48,13 +48,13 @@ const Timer = () => {
                 restart();
                 setIsPause(false);
               }}
-              className="cursor-pointer w-[35px] h-[25px] bg-zinc-900 flex justify-center items-center px-1 rounded "
+              className="cursor-pointer w-[35px] h-[25px] dark:bg-zinc-900 flex justify-center items-center px-1 rounded "
             >
               <IoPlay size={18} />
             </div>
           )}
           <span
-            className="w-[80px] h-[25px] text-center bg-zinc-900 px-2 rounded text-sm flex items-center justify-center font-gg-semi "
+            className="w-[80px] h-[25px] text-center  dark:bg-zinc-900 px-2 rounded text-sm flex items-center justify-center font-gg-semi "
           >
             {formatTime(time)}
           </span>
@@ -63,7 +63,7 @@ const Timer = () => {
               reset();
               setIsStarted(false);
             }}
-            className="cursor-pointer w-[35px] h-[25px] flex justify-center items-center bg-zinc-900 px-1 rounded "
+            className="cursor-pointer w-[35px] h-[25px] flex justify-center items-center dark:bg-zinc-900 px-1 rounded "
           >
             <TiMediaStop size={20} />
           </div>

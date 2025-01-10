@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         hints: {
           create: hints.map((content: string) => ({ content })),
         },
-        testCases: {
+        TestCases: {
           create: testCases.map((testCase: { input: string; output: string; type: 'RUN' | 'SUBMIT' }) => ({
             input: testCase.input,
             output: testCase.output,
@@ -100,7 +100,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json(newProblem, { status: 201 })
   } catch (error) {
-    console.error('Failed to add problem:', error)
+    console.log(error.stack)
+    // console.error('Failed to add problem:', error)
     
     // Provide more specific error messages based on the error type
     // if (error instanceof prisma.PrismaClientKnownRequestError) {
@@ -135,6 +136,7 @@ export async function GET(req: Request) {
     const problems = await prisma.problem.findMany({
       skip,
       take: limit,
+      orderBy: { serial: 'asc' },
       include: {
         tags: { include: { tag: true } },
         companies: { include: { company: true } }

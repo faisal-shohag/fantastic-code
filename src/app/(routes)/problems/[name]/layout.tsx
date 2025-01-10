@@ -12,6 +12,7 @@ import { ProblemProvider, useProblem } from '@/providers/problem-provider'
 import ProblemLayoutSkeleton from '@/components/problem/layout-skeleton'
 import ProblemError from '@/components/problem/error'
 import Editor from '@/components/editor2/Editor'
+import { useTheme } from 'next-themes'
 
 const ProblemLayout = ({ children }) => {
   const params = useParams()
@@ -28,6 +29,8 @@ const ProblemLayout = ({ children }) => {
 
 const ProblemLayoutContent = ({ children }) => {
   const { problem, isLoading, error } = useProblem()
+  const { theme } = useTheme();
+  const editorTheme = theme === "dark" ? "dark" : "light";
   if (isLoading) return <ProblemLayoutSkeleton/>
   if (error) return <ProblemError/>
 
@@ -44,6 +47,7 @@ const ProblemLayoutContent = ({ children }) => {
   return (
     <TimerProvider>
       <div className="h-screen pb-16 px-1 fixed w-full">
+        <div>Navbar: TODO</div>
         <ResizablePanelGroup
           direction="horizontal"
           className="w-full rounded-lg"
@@ -61,7 +65,7 @@ const ProblemLayoutContent = ({ children }) => {
             withHandle
           />
 
-          <Editor problem={problem}/>
+          <Editor problem={problem} editorTheme={editorTheme}/>
 
         </ResizablePanelGroup>
       </div>

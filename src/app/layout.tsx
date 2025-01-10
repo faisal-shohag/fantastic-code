@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import NavBar from "@/components/ui/navbar";
 import ReactQueryProvider from "@/providers/react-query-provider";
 import { SessionProvider } from "next-auth/react";
+import NextTopLoader from "nextjs-toploader";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+         <NextTopLoader color="#ff1a1a" showSpinner={false} />
         <SessionProvider>
           <ReactQueryProvider>
             <ThemeProvider

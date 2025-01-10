@@ -3,33 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model Problem {
-  id          Int         @id @default(autoincrement())
-  serial Int
-  title String
-  unique_title       String      @unique
-  description String
-  difficulty  DifficultyLevel
-  tags        TagsOnProblems[]
-  companies   CompaniesOnProblems[]
-  editorials  Editorial[]
-  solutions   Solution[]
-  submissions Submission[]
-  hints       Hint[]
-  defaultCode Json
-  testCases   TestCase[]
-  func String?
-  author User @relation(references: [id], fields: [userId], onDelete: Cascade)
-  userId String
-  likes       Like[]
-  comments    Comment[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           Int                   @id @default(autoincrement())
+  title        String
+  unique_title String                @unique
+  description  String
+  difficulty   DifficultyLevel
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  func         String?
+  serial       Int
+  userId       String
+  defaultCode  Json
+  timelimit    Int                   @default(1)
+  comments     Comment[]
+  companies    CompaniesOnProblems[]
+  editorials   Editorial[]
+  hints        Hint[]
+  likes        Like[]
+  author       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solutions    Solution[]
+  submissions  Submission[]
+  tags         TagsOnProblems[]
+  TestCases    TestCase[]
 }
 
 model Tag {
@@ -39,10 +40,10 @@ model Tag {
 }
 
 model TagsOnProblems {
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
-  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId     Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([problemId, tagId])
   @@index([tagId])
@@ -55,10 +56,10 @@ model Company {
 }
 
 model CompaniesOnProblems {
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId Int
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@id([problemId, companyId])
   @@index([companyId])
@@ -67,66 +68,60 @@ model CompaniesOnProblems {
 model Editorial {
   id        Int     @id @default(autoincrement())
   content   String
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 }
 
 model Solution {
   id        Int     @id @default(autoincrement())
   code      String
   language  String
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 }
 
 model Submission {
-  id        Int             @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   status    SubmissionStatus
-  date      DateTime        @default(now())
+  date      DateTime         @default(now())
   language  String
   runtime   Float?
   memory    Float?
-  problem   Problem         @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-}
-
-enum SubmissionStatus {
-  PENDING
-  ACCEPTED
-  WRONG_ANSWER
-  RUNTIME_ERROR
-  COMPILATION_ERROR
+  code      String
+  tc        String?
+  problem   Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id          String @id @default(cuid())
-  username    String?        @unique
-  email String @unique
-  emailVerified DateTime?
-  name String
-  bio String?
-  image String?
-  institution String?
-  website   String?
-  github String?
-  linkedin String?
-  x String?
-  gender String?
-  location String?
-  birthday String?
-  skills Skills[]
-  works Works[]
-  educations Educations[]
-  submissions Submission[]
-  likes       Like[]
-  comments    Comment[]
-  commentLikes CommentLike[]
-  replyLikes   ReplyLike[]
-  accounts Account[]
-  sessions Session[]
+  id               String        @id @default(cuid())
+  username         String?       @unique
+  email            String        @unique
+  emailVerified    DateTime?
+  name             String
+  bio              String?
+  image            String?
+  institution      String?
+  website          String?
+  github           String?
+  linkedin         String?
+  x                String?
+  gender           String?
+  location         String?
+  birthday         String?
+  comments         Comment[]
+  commentLikes     CommentLike[]
+  educations       Educations[]
+  likes            Like[]
   created_problems Problem[]
+  replyLikes       ReplyLike[]
+  skills           Skills[]
+  submissions      Submission[]
+  works            Works[]
+  accounts         Account[]
+  sessions         Session[]
 }
 
 model Account {
@@ -170,41 +165,40 @@ model VerificationToken {
 }
 
 model Skills {
-  id          Int           @id @default(autoincrement())
-  name String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int    @id @default(autoincrement())
+  name   String
   userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Works {
-  id          Int           @id @default(autoincrement())
-  company String
-  title String
-  isPresent Boolean @default(false)
+  id        Int       @id @default(autoincrement())
+  company   String
+  title     String
+  isPresent Boolean   @default(false)
   startDate DateTime?
-  endDate DateTime?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  endDate   DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Educations {
-  id          Int           @id @default(autoincrement())
-  school String
-  degree String
-  isPresent Boolean @default(false)
+  id        Int       @id @default(autoincrement())
+  school    String
+  degree    String
+  isPresent Boolean   @default(false)
   startDate DateTime?
-  endDate DateTime?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  endDate   DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 model Like {
   id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, problemId])
 }
@@ -212,40 +206,40 @@ model Like {
 model Comment {
   id        Int           @id @default(autoincrement())
   content   String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  problem   Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
-  createdAt DateTime     @default(now())
-  replies   Reply[]      
+  createdAt DateTime      @default(now())
+  problem   Problem       @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     CommentLike[]
+  replies   Reply[]
 }
 
 model Reply {
-  id        Int          @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   content   String
-  comment   Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int
-  createdAt DateTime     @default(now())
+  createdAt DateTime    @default(now())
+  comment   Comment     @relation(fields: [commentId], references: [id], onDelete: Cascade)
   likes     ReplyLike[]
 }
 
 model CommentLike {
   id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, commentId])
 }
 
 model ReplyLike {
-  id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  reply     Reply   @relation(fields: [replyId], references: [id], onDelete: Cascade)
-  replyId   Int
+  id      Int    @id @default(autoincrement())
+  userId  String
+  replyId Int
+  reply   Reply  @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, replyId])
 }
@@ -253,17 +247,25 @@ model ReplyLike {
 model Hint {
   id        Int     @id @default(autoincrement())
   content   String
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 }
 
 model TestCase {
-  id        Int         @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   input     String
   output    String
-  problem   Problem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId Int
   type      TestCaseType
+  problem   Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  WRONG_ANSWER
+  RUNTIME_ERROR
+  COMPILATION_ERROR
 }
 
 enum TestCaseType {

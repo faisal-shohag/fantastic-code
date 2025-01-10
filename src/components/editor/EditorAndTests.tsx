@@ -27,6 +27,7 @@ const EditorAndTests = ({ problem }) => {
   const [source, setSource] = useState("");
   const [results, setResults] = useState<RunResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onChange = (value) => {
     setSource(value);
@@ -74,6 +75,7 @@ const EditorAndTests = ({ problem }) => {
   const onSubmit = () => {
     console.log(source);
     console.log('Submitted!');
+    setIsSubmitting(true)
   };
   // console.log(results)
 
@@ -82,7 +84,7 @@ const EditorAndTests = ({ problem }) => {
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={70}>
           <div className="border overflow-hidden rounded-lg bg-zinc-900 h-full">
-            <SolutionHead onRun={onRun} onSubmit={onSubmit} isRunning={isRunning} />
+            <SolutionHead onRun={onRun} onSubmit={onSubmit} isRunning={isRunning} isSubmitting={isSubmitting}/>
             <CodeEditor onChange={onChange} defaultCode={problem.defaultCode} />
           </div>
         </ResizablePanel>

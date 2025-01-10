@@ -25,6 +25,7 @@ export const useProblem = () => {
 
 const fetchProblem = async (problemId: string): Promise<ProblemData> => {
   const response = await fetch(`/api/problems/${problemId}`)
+ 
   if (!response.ok) {
     throw new Error('Failed to fetch problem')
   }
@@ -40,6 +41,7 @@ export function ProblemProvider({ children, problemId }) {
       refetchOnReconnect: false,
     }
   )
+
 
   return (
     <ProblemContext.Provider
