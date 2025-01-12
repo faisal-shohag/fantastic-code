@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+// import { Button } from '@/components/ui/button'
 import {
   Pagination,
   PaginationContent,
@@ -15,7 +15,7 @@ import {
   PaginationNext,
 } from '@/components/ui/pagination'
 import Link from 'next/link'
-import { ChevronRight, Trophy } from 'lucide-react'
+// import { ChevronRight, Trophy } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -142,10 +142,10 @@ export default function ProblemListTable() {
       )}
 
       <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <Trophy className="w-4 h-4 text-yellow-500" />
           <span className="text-sm text-gray-600">+50 XP per solved problem</span>
-        </div>
+        </div> */}
         <Pagination>
           <PaginationContent>
             <PaginationItem>
