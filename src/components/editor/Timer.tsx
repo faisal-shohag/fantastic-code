@@ -31,7 +31,7 @@ const Timer = () => {
         </span>
       )}
       {isStarted && (
-        <div className="flex gap-[2px] items-center bg-slate-200 rounded-lg">
+        <div className="flex gap-[2px] items-center dark:bg-zinc-900 bg-slate-200 rounded-lg ">
           {!isPause ? (
             <div
               onClick={() => {

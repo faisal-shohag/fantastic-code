@@ -13,6 +13,7 @@ import ProblemLayoutSkeleton from '@/components/problem/layout-skeleton'
 import ProblemError from '@/components/problem/error'
 import Editor from '@/components/editor2/Editor'
 import { useTheme } from 'next-themes'
+import ProblemTopNavBar from '@/components/problem/problem-top-navbar'
 
 const ProblemLayout = ({ children }) => {
   const params = useParams()
@@ -46,8 +47,9 @@ const ProblemLayoutContent = ({ children }) => {
 
   return (
     <TimerProvider>
+       <ProblemTopNavBar/>
       <div className="h-screen pb-16 px-1 fixed w-full">
-        <div>Navbar: TODO</div>
+       
         <ResizablePanelGroup
           direction="horizontal"
           className="w-full rounded-lg"
