@@ -73,14 +73,14 @@ const TestCasesView = ({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex gap-5 p-2">
+      <div className="flex gap-5 p-2 overflow-x-scroll">
         {testCases.map((tc, index) => (
           <div key={tc.id}>
             <div
               onClick={() => setActiveIndex(index)}
               className={`${
                 activeIndex === index ? "dark:bg-zinc-800 bg-slate-300" : ""
-              } flex items-center cursor-pointer px-3 py-1 text-sm rounded-lg font-medium hover:dark:bg-zinc-800 hover:bg-slate-300`}
+              } flex items-center cursor-pointer px-3 py-1 text-xs w-[90px] justify-center rounded-lg font-medium hover:dark:bg-zinc-800 hover:bg-slate-300`}
             >
               Case {index + 1}
               {results?.output?.[index] && (
