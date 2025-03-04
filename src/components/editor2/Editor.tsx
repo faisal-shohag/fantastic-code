@@ -165,22 +165,22 @@ const Editor = ({ problem, editorTheme }) => {
   };
 
   const onChange = (value) => {
-    localStorage.setItem(problem.id, source);
+    localStorage.setItem(`${problem.id}_${language}`, source);
     setSource(value);
   };
 
   useEffect(() => {
-    const storedSource = localStorage.getItem(problem.id);
+    
     const lang = localStorage.getItem("language");
-
-    if (storedSource) {
-      setSource(storedSource);
-    } else {
-      setSource(problem.defaultCode[language]);
-    }
 
     if (lang) {
       setLanguage(lang);
+      const storedSource = localStorage.getItem(`${problem.id}_${lang}`);
+      if (storedSource) {
+        setSource(storedSource);
+      } else {
+        setSource(problem.defaultCode[lang]);
+      }
     } else {
       setLanguage(language);
     }
@@ -188,7 +188,8 @@ const Editor = ({ problem, editorTheme }) => {
 
   const setLanguageHandler = (lang) => {
     setLanguage(lang);
-    setSource(problem.defaultCode[lang]);
+    // console.log(`${problem.id}_${language}`)
+    setSource(localStorage.getItem(`${problem.id}_${lang}`) ? localStorage.getItem(`${problem.id}_${lang}`) : problem.defaultCode[lang]);
   };
 
 

@@ -1,74 +1,196 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as ts from 'typescript';
 import vm from 'vm';
+import * as ts from 'typescript';
 
 type TestCase = {
-  context: Record<string, unknown>;
-  expected: unknown;
+  input: string;
+  output: string;
 };
 
-type Result = {
-  testCase: TestCase;
-  result?: unknown;
-  stdout?: string[];
-  error?: string;
-  stack?: string;
+type OutputResult = {
+  error: string | null;
+  output: string;
+  status: "passed" | "failed";
+  stderr: string;
+  stdout: string[];
+  yourOutput: string;
+};
+
+type ResponseFormat = {
+  output: OutputResult[];
+  passedTestCases: number;
+  version: string;
+  runtime: number;
+  status: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error";
+  totalTestCases: number;
 };
 
 export async function POST(req: NextRequest) {
-  const { code, testCases, mode }: { code: string; testCases: TestCase[]; mode: 'run' | 'submit' } = await req.json();
+  const { code, testCases, action, func }: { 
+    code: string; 
+    testCases: TestCase[]; 
+    action: 'run' | 'submit';
+    func: string;
+  } = await req.json();
 
-  // Compile TypeScript to JavaScript
-  const transpiled = ts.transpileModule(code, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2015,
-    },
-  });
+  const output: OutputResult[] = [];
+  let passedTestCases = 0;
+  let totalRuntime = 0;
+  let overallStatus: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error" = "Accepted";
 
-  const results: Result[] = [];
+  // Compile TypeScript to JavaScript if needed
+  let jsCode = code;
+  if (code.includes(':') || code.includes('<') || code.includes('interface ') || code.includes('type ')) {
+    try {
+      // TypeScript compilation options
+      const compilerOptions: ts.CompilerOptions = {
+        target: ts.ScriptTarget.ES2020,
+        module: ts.ModuleKind.CommonJS,
+        strict: false,
+        esModuleInterop: true,
+        skipLibCheck: true,
+      };
+
+      // Compile TypeScript to JavaScript
+      const result = ts.transpileModule(code, { compilerOptions });
+      jsCode = result.outputText;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Handle compilation error
+      for (const testCase of testCases) {
+        output.push({
+          error: `TypeScript compilation error: ${errorMessage}`,
+          output: String(testCase.output),
+          status: "failed",
+          stderr: error instanceof Error ? error.stack || "" : "",
+          stdout: [],
+          yourOutput: ""
+        });
+      }
+
+      const response: ResponseFormat = {
+        output,
+        passedTestCases: 0,
+        version: process.version,
+        runtime: 0,
+        status: "Compilation Error",
+        totalTestCases: testCases.length
+      };
+      
+      return NextResponse.json(response);
+    }
+  }
 
   for (const testCase of testCases) {
     try {
-      let stdout = '';
+      const startTime = performance.now();
+      
+      const stdout: string[] = [];
       const customConsole = {
         log: (...args: unknown[]) => {
-          stdout += args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ') + '\n';
+          stdout.push(args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' '));
         },
       };
 
+      // Create a context
       const context = {
-        console: customConsole,
-        ...testCase.context // Add test case–specific context
+        console: customConsole
       };
 
       vm.createContext(context);
 
-      const script = new vm.Script(`(${transpiled.outputText})`);
-      const func = script.runInContext(context);
+      // Convert function name if needed (from snake_case to camelCase)
+      const jsFunc = func.includes('_') ? 
+        func.replace(/_([a-z])/g, (m, p1) => p1.toUpperCase()) : 
+        func;
 
-      // Assuming `func` is a function that needs to be executed
-      const result = func();
+      // Execute the code to define the function, then call it
+      const script = new vm.Script(`
+        ${jsCode}
+        (function() {
+          try {
+            // Try the original function name
+            if (typeof ${jsFunc} === 'function') {
+              return ${jsFunc}(${testCase.input || ''});
+            }
+            // If not found, try the original func name provided
+            else if (typeof ${func} === 'function') {
+              return ${func}(${testCase.input || ''});
+            }
+            // Look for any defined function as fallback
+            else {
+              const definedFunctions = Object.keys(this).filter(key => typeof this[key] === 'function');
+              if (definedFunctions.length > 0) {
+                return this[definedFunctions[0]](${testCase.input || ''});
+              }
+              throw new Error('No matching function found');
+            }
+          } catch (e) {
+            throw e;
+          }
+        })()
+      `);
 
-      results.push({
-        testCase,
-        result,
-        stdout: stdout.trim() ? stdout.trim().split('\n') : [],
+      const result = script.runInContext(context);
+      const endTime = performance.now();
+      const runtime = Math.round(endTime - startTime);
+      totalRuntime += runtime;
+
+      const resultStr = result !== undefined ? result.toString() : '';
+      const expectedStr = testCase.output.toString();
+      const isTestCasePassed = resultStr === expectedStr;
+
+      if (isTestCasePassed) {
+        passedTestCases++;
+      } else if (overallStatus === "Accepted") {
+        overallStatus = "Wrong Answer";
+      }
+
+      output.push({
+        error: null,
+        output: expectedStr,
+        status: isTestCasePassed ? "passed" : "failed",
+        stderr: "",
+        stdout: stdout,
+        yourOutput: resultStr
       });
     } catch (error: unknown) {
-      const errorResult: Result = {
-        testCase,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
-      results.push(errorResult);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      let errorStatus: "Runtime Error" | "Compilation Error" = "Runtime Error";
+      if (error instanceof Error && error.message.includes('Syntax')) {
+        errorStatus = "Compilation Error";
+      }
+      
+      if (overallStatus === "Accepted" || overallStatus === "Wrong Answer") {
+        overallStatus = errorStatus;
+      }
 
-      // If mode is "submit", return immediately on the first error
-      if (mode === 'submit') {
-        return NextResponse.json(results);
+      output.push({
+        error: errorMessage,
+        output: String(testCase.output),
+        status: "failed",
+        stderr: error instanceof Error ? error.stack || "" : "",
+        stdout: [],
+        yourOutput: ""
+      });
+
+      // If action is "submit", return immediately on the first error
+      if (action === 'submit') {
+        break;
       }
     }
   }
 
-  return NextResponse.json(results);
+  const response: ResponseFormat = {
+    output,
+    passedTestCases,
+    version: process.version,
+    runtime: totalRuntime,
+    status: overallStatus,
+    totalTestCases: testCases.length
+  };
+  
+  return NextResponse.json(response);
 }
