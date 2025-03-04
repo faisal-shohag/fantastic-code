@@ -4,9 +4,13 @@ import { TestTubeDiagonalIcon } from "lucide-react";
 import { useState } from "react";
 import { GoDotFill } from "react-icons/go";
 
-export default function TestCase({ testcases, results, isRunning, state }) {
+export default function TestCase({ testcases, results, isRunning, state, language }) {
   // console.log(isRunning)
   // console.log(results)
+  // console.log(testcases)
+  // console.log(state)
+  // console.log(results)
+  // console.log(isRunning)
 
   return (
     <div className="border h-full dark:bg-zinc-900 rounded-lg flex overflow-auto flex-col">
@@ -18,7 +22,7 @@ export default function TestCase({ testcases, results, isRunning, state }) {
         </span>
       </div>
       <div>
-        <TestCasesView state={state} testCases={testcases} results={results} />
+        <TestCasesView state={state} testCases={testcases} results={results} language={language} />
       </div>
     </div>
   );
@@ -44,7 +48,7 @@ interface TestResult {
 interface Results {
   output: TestResult[];
   passedTestCases: number;
-  pythonVersion: string;
+  version: string;
   runtime: number;
   status: string;
   totalTestCases: number;
@@ -54,12 +58,14 @@ interface TestCasesViewProps {
   testCases: TestCase[];
   results: Results;
   state: string;
+  language: string;
 }
 
 const TestCasesView = ({
   testCases,
   results,
   state,
+  language,
 }: TestCasesViewProps): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -104,7 +110,7 @@ const TestCasesView = ({
               Status: {currentResult.status}
             </div>
             <div className="text-muted-foreground text-xs">
-              Runtime: {results.runtime} ms | Python {results.pythonVersion}
+              Runtime: {results.runtime} ms | {language} {results.version}
             </div>
           </div>
         )}
@@ -169,11 +175,11 @@ const TestCasesView = ({
         )}
       </div>
 
-      <div className="p-2 border-t dark:border-zinc-800 mt-2">
+      {results?.output?.length && <div className="p-2 border-t dark:border-zinc-800 mt-2">
         <div className="text-sm text-muted-foreground">
           Test Cases: {results.passedTestCases}/{results.totalTestCases} passed
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

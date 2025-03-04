@@ -2,84 +2,150 @@ import { NextRequest, NextResponse } from 'next/server';
 import vm from 'vm';
 
 type TestCase = {
-  context: Record<string, unknown>;
-  expected: unknown;
+  input: string;
+  output: string;
 };
 
-type Result = {
-  testCase: TestCase;
-  result?: unknown;
-  stdout?: string[];
-  error?: string;
-  stack?: string;
-  isTestCasePassed: boolean;
-  answer: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error";
+type OutputResult = {
+  error: string | null;
+  output: string;
+  status: "passed" | "failed";
+  stderr: string;
+  stdout: string[];
+  yourOutput: string;
+};
+
+type ResponseFormat = {
+  output: OutputResult[];
+  passedTestCases: number;
+  version: string;
   runtime: number;
+  status: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error";
+  totalTestCases: number;
 };
 
 export async function POST(req: NextRequest) {
-  const { code, testCases, mode }: { code: string; testCases: TestCase[]; mode: 'run' | 'submit' } = await req.json();
+  const { code, testCases, action, func }: { 
+    code: string; 
+    testCases: TestCase[]; 
+    action: 'run' | 'submit';
+    func: string;
+  } = await req.json();
 
-  const results: Result[] = [];
+  const output: OutputResult[] = [];
+  let passedTestCases = 0;
+  let totalRuntime = 0;
+  let overallStatus: "Accepted" | "Wrong Answer" | "Runtime Error" | "Compilation Error" = "Accepted";
 
   for (const testCase of testCases) {
     try {
       const startTime = performance.now();
-
-      let stdout = '';
+      
+      const stdout: string[] = [];
       const customConsole = {
         log: (...args: unknown[]) => {
-          stdout += args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ') + '\n';
+          stdout.push(args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' '));
         },
       };
 
-      // Create a context with the array directly
+      // Create a context
       const context = {
-        console: customConsole,
-        input: testCase.context.input  // Direct array assignment
+        console: customConsole
       };
 
       vm.createContext(context);
 
+      // Convert function name if needed (from snake_case to camelCase)
+      const jsFunc = func.includes('_') ? 
+        func.replace(/_([a-z])/g, (m, p1) => p1.toUpperCase()) : 
+        func;
+
+      // Execute the code to define the function, then call it
       const script = new vm.Script(`
+        ${code}
         (function() {
-          const userFunction = ${code};
-          return userFunction(${context.input});
+          try {
+            // Try the original function name
+            if (typeof ${jsFunc} === 'function') {
+              return ${jsFunc}(${testCase.input || ''});
+            }
+            // If not found, try the original func name provided
+            else if (typeof ${func} === 'function') {
+              return ${func}(${testCase.input || ''});
+            }
+            // Look for any defined function as fallback
+            else {
+              const definedFunctions = Object.keys(this).filter(key => typeof this[key] === 'function');
+              if (definedFunctions.length > 0) {
+                return this[definedFunctions[0]](${testCase.input || ''});
+              }
+              throw new Error('No matching function found');
+            }
+          } catch (e) {
+            throw e;
+          }
         })()
       `);
 
       const result = script.runInContext(context);
       const endTime = performance.now();
-      console.log(result, testCase.expected)
+      const runtime = Math.round(endTime - startTime);
+      totalRuntime += runtime;
 
-      const isTestCasePassed = result.toString() == testCase.expected;
-      const answer = isTestCasePassed ? "Accepted" : "Wrong Answer";
+      const resultStr = result !== undefined ? result.toString() : '';
+      const expectedStr = testCase.output.toString();
+      const isTestCasePassed = resultStr === expectedStr;
 
-      results.push({
-        testCase,
-        result,
-        stdout: stdout.trim() ? stdout.trim().split('\n') : [],
-        isTestCasePassed,
-        answer,
-        runtime: Math.round(endTime - startTime)
+      if (isTestCasePassed) {
+        passedTestCases++;
+      } else if (overallStatus === "Accepted") {
+        overallStatus = "Wrong Answer";
+      }
+
+      output.push({
+        error: null,
+        output: expectedStr,
+        status: isTestCasePassed ? "passed" : "failed",
+        stderr: "",
+        stdout: stdout,
+        yourOutput: resultStr
       });
     } catch (error: unknown) {
-      const errorResult: Result = {
-        testCase,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        isTestCasePassed: false,
-        answer: error instanceof Error && error.message.includes('Syntax') ? "Compilation Error" : "Runtime Error",
-        runtime: 0
-      };
-      results.push(errorResult);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      let errorStatus: "Runtime Error" | "Compilation Error" = "Runtime Error";
+      if (error instanceof Error && error.message.includes('Syntax')) {
+        errorStatus = "Compilation Error";
+      }
+      
+      if (overallStatus === "Accepted" || overallStatus === "Wrong Answer") {
+        overallStatus = errorStatus;
+      }
 
-      // If mode is "submit", return immediately on the first error
-      if (mode === 'submit') {
-        return NextResponse.json(results);
+      output.push({
+        error: errorMessage,
+        output: String(testCase.output),
+        status: "failed",
+        stderr: error instanceof Error ? error.stack || "" : "",
+        stdout: [],
+        yourOutput: ""
+      });
+
+      // If action is "submit", return immediately on the first error
+      if (action === 'submit') {
+        break;
       }
     }
   }
+
+  const response: ResponseFormat = {
+    output,
+    passedTestCases,
+    version: process.version,
+    runtime: totalRuntime,
+    status: overallStatus,
+    totalTestCases: testCases.length
+  };
   
-  return NextResponse.json(results);
+  return NextResponse.json(response);
 }

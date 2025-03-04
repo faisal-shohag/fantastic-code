@@ -18,14 +18,14 @@ export default function EditorHeader({language, setLanguageHandler}) {
   const setLanguage = (value) => {
     localStorage.setItem('language', value)
     setLanguageHandler(value)
-
   }
+
   return (
     <div className="flex justify-between items-center w-full text-zinc-400 pr-1">
     <div className="flex items-center gap-2">
-      <CustomSelect onValueChange={(value) => setLanguage(value)} defaultValue={language}>
+      <CustomSelect onValueChange={(value) => setLanguage(value)} defaultValue={localStorage.getItem('language') ? localStorage.getItem('language') : language}>
         <CustomSelectTrigger className="w-[115px]">
-          <CustomSelectValue placeholder="Select language" />
+          <CustomSelectValue  placeholder="Select language" />
         </CustomSelectTrigger>
         <CustomSelectContent>
           <CustomSelectGroup>

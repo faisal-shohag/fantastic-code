@@ -44,7 +44,7 @@ const Editor = ({ problem, editorTheme }) => {
     else setStatus("SUBMIT")
 
     if (source == "") return;
-    const testCases = formattedTestCases(problem.testCases, "RUN")
+    const testCases = formattedTestCases(problem.testCases, action === 'run' ? "RUN" : "SUBMIT")
     try {
       if(action === 'run')
       setIsRunning(true);
@@ -162,7 +162,6 @@ const Editor = ({ problem, editorTheme }) => {
     wordWrap: "off",
     wordWrapColumn: 80,
     wrappingIndent: "none",
-    language: "python",
   };
 
   const onChange = (value) => {
@@ -185,12 +184,34 @@ const Editor = ({ problem, editorTheme }) => {
     } else {
       setLanguage(language);
     }
-  }, [problem.id, problem.defaultCode, language]);
+  }, [problem.id, problem.defaultCode]);
 
   const setLanguageHandler = (lang) => {
     setLanguage(lang);
     setSource(problem.defaultCode[lang]);
   };
+
+
+//   {
+//     "output": [
+//         {
+//             "error": null,
+//             "output": "Hello, World!",
+//             "status": "passed",
+//             "stderr": "",
+//             "stdout": [
+//                 ""
+//             ],
+//             "yourOutput": "Hello, World!"
+//         }
+//     ],
+//     "passedTestCases": 1,
+//     "pythonVersion": "3.12.7",
+//     "runtime": 0,
+//     "status": "Accepted",
+//     "totalTestCases": 1
+// }
+  
 
   return (
     <ResizablePanel defaultSize={50}>
@@ -213,6 +234,7 @@ const Editor = ({ problem, editorTheme }) => {
               height="80vh"
               defaultLanguage={language}
               options={options}
+              language={language}
               value={source.toString()}
               // onMount={handleEditorDidMount}
             />
@@ -229,6 +251,7 @@ const Editor = ({ problem, editorTheme }) => {
             testcases={problem.testCases}
             results={results}
             isRunning={isRunning}
+            language={language}
           />
         </ResizablePanel>
       </ResizablePanelGroup>
@@ -237,25 +260,55 @@ const Editor = ({ problem, editorTheme }) => {
 };
 
 async function Runner(language, source, axiosSecure, testCases, action, func) {
-  if (language === "pyhton") {
-    const response = await axiosSecure.post(
-      "https://python-execution.vercel.app/python",
-      {
-        code: convertSource(source),
-        testCases,
-        action,
-        func,
+  
+  if (language === "python") {
+    try {
+      const response = await axiosSecure.post(
+        "https://python-execution.vercel.app/python",
+        {
+          code: convertSource(source),
+          testCases,
+          action,
+          func,
+        }
+      );
+  
+      if (!response) {
+        console.log(await response);
+        throw new Error("Failed to run test cases");
       }
-    );
-
-    if (!response) {
-      console.log(await response);
-      throw new Error("Failed to run test cases");
+  
+      const data =  await response.data;
+      return data;
+      
+    } catch (error) {
+      console.log("ERRRRRRRRRRRRROOOOOOOOORRRRRRRRRRR")
+      console.log(error)
     }
+  }
+  else {
+    try {
+      const response = await axiosSecure.post(
+        `/api/compiler/${language}`,
+        {
+          code: convertSource(source),
+          testCases,
+          action,
+          func,
+        }
+      );
 
-    const data = await response.data;
+      if (!response) {
+        throw new Error("Failed to run test cases");
+      }
 
-    return data;
+      const data = await response.data;
+      // console.log(data);
+      return data;
+
+    } catch (error) {
+      console.log(error)
+    }
   }
 }
 
