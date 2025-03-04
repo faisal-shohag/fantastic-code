@@ -5,7 +5,6 @@ import { TextLoop } from "@/components/ui/text-loop";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-// import Editor from "@/components/editor2/Editor"
 
 export default function Home() {
   return (

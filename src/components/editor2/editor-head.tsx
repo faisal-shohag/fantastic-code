@@ -6,7 +6,7 @@ import {
     CustomSelectTrigger,
     CustomSelectValue,
   } from "@/components/ui/custom-select";
-  import { BiLogoPython } from "react-icons/bi";
+  import { BiLogoJavascript, BiLogoPython, BiLogoTypescript } from "react-icons/bi";
 //   import { MdAutoMode } from "react-icons/md";
   import { CgFormatLeft } from "react-icons/cg";
   import { GoBookmarkFill } from "react-icons/go";
@@ -14,11 +14,16 @@ import {
   import { LuMaximize2 } from "react-icons/lu";
   import { IoSettingsOutline } from "react-icons/io5";
 
-export default function EditorHeader() {
+export default function EditorHeader({language, setLanguageHandler}) {
+  const setLanguage = (value) => {
+    localStorage.setItem('language', value)
+    setLanguageHandler(value)
+
+  }
   return (
     <div className="flex justify-between items-center w-full text-zinc-400 pr-1">
     <div className="flex items-center gap-2">
-      <CustomSelect defaultValue="python">
+      <CustomSelect onValueChange={(value) => setLanguage(value)} defaultValue={language}>
         <CustomSelectTrigger className="w-[115px]">
           <CustomSelectValue placeholder="Select language" />
         </CustomSelectTrigger>
@@ -30,16 +35,16 @@ export default function EditorHeader() {
                 Python
               </span>
             </CustomSelectItem>
-            {/* <CustomSelectItem value="javascript">
+            <CustomSelectItem value="javascript">
                           <span className='flex items-center gap-1 text-xs'>
                               <BiLogoJavascript className='text-yellow-500' /> JavaScript
                           </span>
-                      </CustomSelectItem> */}
-            {/* <CustomSelectItem value="typescript">
+                      </CustomSelectItem>
+            <CustomSelectItem value="typescript">
                           <span className='flex items-center gap-1 text-xs'>
                               <BiLogoTypescript className='text-blue-500' /> TypeScript
                           </span>
-                      </CustomSelectItem> */}
+                      </CustomSelectItem>
           </CustomSelectGroup>
         </CustomSelectContent>
       </CustomSelect>
