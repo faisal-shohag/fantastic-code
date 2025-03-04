@@ -156,12 +156,12 @@ const Editor = ({ problem, editorTheme }) => {
     selectOnLineNumbers: true,
     selectionHighlight: true,
     showFoldingControls: "mouseover",
-    smoothScrolling: false,
+    smoothScrolling: true,
     suggestOnTriggerCharacters: true,
     wordBasedSuggestions: "allDocuments",
-    wordWrap: "off",
-    wordWrapColumn: 80,
-    wrappingIndent: "none",
+    wordWrap: "on",
+    wordWrapColumn: 50,
+    wrappingIndent: "same",
   };
 
   const onChange = (value) => {
@@ -183,6 +183,7 @@ const Editor = ({ problem, editorTheme }) => {
       }
     } else {
       setLanguage(language);
+      setSource(problem.defaultCode[language]);
     }
   }, [problem.id, problem.defaultCode]);
 
