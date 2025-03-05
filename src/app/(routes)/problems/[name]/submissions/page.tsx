@@ -1,8 +1,11 @@
+import { auth } from "@/auth";
+import SubmissionList from "./submissions-list";
 
-const Submissions = () => {
+const Submissions = async() => {
+    const session = await auth()
     return (
         <div>
-            Submissions
+           {session?.user && <SubmissionList userId={session?.user?.id}/>}
         </div>
     );
 };

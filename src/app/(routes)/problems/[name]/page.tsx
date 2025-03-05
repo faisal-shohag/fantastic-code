@@ -12,7 +12,7 @@ export default function ProblemPage() {
   if (error || !problem) return <ProblemError />;
 
   return (
-    <div className="h-full overflow-y-auto pb-20 px-5 pt-3">
+    <div className="h-full   pb-20 px-5 pt-3">  
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{problem.title}</h1>
         <DifficultyBadge difficulty={problem.difficulty} />

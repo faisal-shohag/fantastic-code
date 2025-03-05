@@ -54,13 +54,13 @@ const ProblemLayoutContent = ({ children }) => {
           direction="horizontal"
           className="w-full rounded-lg"
         >
-          <ResizablePanel defaultSize={50}>
-            <div className="border dark:bg-zinc-900 h-full rounded-lg overflow-hidden">
-              <ProblemNavBar  problemName={problem.unique_title}/>
+           
+          <ResizablePanel className='overflow-y-hidden' defaultSize={50} >
+            <div className="border relative h-full overflow-x-scroll   dark:bg-zinc-900  rounded-lg ">
+            <ProblemNavBar  problemName={problem.unique_title}/>
               {children}
             </div>
           </ResizablePanel>
-
           <ResizableHandle
           
             className="dark:bg-zinc-950 p-[2px] rounded-xl"

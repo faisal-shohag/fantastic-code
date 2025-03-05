@@ -17,7 +17,7 @@ const ProblemNavBar = ({problemName}) => {
     }
 
     return (
-        <div className="dark:bg-zinc-800 bg-slate-300 px-2 py-1 flex items-center gap-3 text-sm font-gg-med">
+        <div className="dark:bg-zinc-800  bg-slate-300 px-2 py-1 flex items-center gap-3 text-sm font-gg-med">
             <Link className={`flex gap-1 items-center hover:bg-slate-100 hover:dark:bg-zinc-700  px-2 py-1 rounded-md hover:shadow-xl  ${pathNames['/'] === path && 'dark:bg-zinc-700 bg-zinc-50 font-gg-semi'}`} href={pathNames['/']}>
             <MdOutlineDescription className="text-blue-500"/> Description
             </Link>

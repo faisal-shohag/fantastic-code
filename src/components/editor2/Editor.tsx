@@ -11,6 +11,9 @@ import { useEffect, useState } from "react";
 import SolutionHead from "../editor/SolutionHead";
 import TestCase from "./test-case";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
+import { useMutation, useQueryClient } from "react-query";
+import { Submission } from "@/lib/types";
+import { useSession } from "next-auth/react";
 
 const formattedTestCases = (testcases, action) => {
   const runTestCases = testcases.filter((tc) => tc.type === action);
@@ -27,6 +30,16 @@ const convertSource = (source) => {
     .replace(/\n/g, "\n")}`;
 };
 
+const postSubmission = async (submission, axiosSecure) => {
+  try {
+    const response = await axiosSecure.post("/api/submission", submission);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting submission:", error);
+    throw error;
+  }
+};
+
 const Editor = ({ problem, editorTheme }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,85 +47,71 @@ const Editor = ({ problem, editorTheme }) => {
   const [results, setResults] = useState([]);
   const [state, setStatus] = useState("RUN");
   const [language, setLanguage] = useState("javascript");
-
   const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient()
+  const {data: session} = useSession()
+
 
   const onRun = async (action) => {
     localStorage.setItem(problem.id, source);
     setResults([]);
-    if(action === 'run')  setStatus("RUN")  
-    else setStatus("SUBMIT")
+    if (action === "run") setStatus("RUN");
+    else setStatus("SUBMIT");
 
     if (source == "") return;
-    const testCases = formattedTestCases(problem.testCases, action === 'run' ? "RUN" : "SUBMIT")
+    const testCases = formattedTestCases(
+      problem.testCases,
+      action === "run" ? "RUN" : "SUBMIT"
+    );
     try {
-      if(action === 'run')
-      setIsRunning(true);
-      else setIsSubmitting(true)
-      const data = await Runner(language, convertSource(source), axiosSecure, testCases, action, problem.func)
+      if (action === "run") setIsRunning(true);
+      else setIsSubmitting(true);
+      const data = await Runner(
+        language,
+        convertSource(source),
+        axiosSecure,
+        testCases,
+        action,
+        problem.func
+      );
       setResults(data);
-      if(action === 'run')
-      setIsRunning(false);
-      else setIsSubmitting(false)
+      
+      if (action === "run") setIsRunning(false);
+      else{ 
+        setIsSubmitting(false);
+        submissionMutation.mutate({
+          problemId: problem.id,
+          code: source,
+          language: language,
+          status: data.status,
+          runtime: data.runtime,
+          tc: data,
+          percentage: Number((data.passedTestCases / (data.totalTestCases)*100).toFixed(3)),
+          userId: session?.user?.id || "",
+          memory: 0
+        })
+      }
     } catch (error) {
       console.log(error);
       console.error("Error running test cases:", error);
-      if(action === 'run')
-        setIsRunning(false);
-        else setIsSubmitting(false)
+      if (action === "run") setIsRunning(false);
+      else setIsSubmitting(false);
     } finally {
-      if(action === 'run')
-        setIsRunning(false);
-        else setIsSubmitting(false)
+      if (action === "run") setIsRunning(false);
+      else setIsSubmitting(false);
     }
   };
-
-  // const onSubmit = async () => {
-  //   localStorage.setItem(problem.id, source);
-  //   if (source == "") return;
-  //   setResults([]);
-  //   setStatus("SUBMIT");
-  //   console.log(formattedTestCases(problem.testCases, "SUBMIT"));
-  //   try {
-  //     setIsSubmitting(true);
-  //     const response = await axiosSecure.post(
-  //       "https://python-execution.vercel.app/python",
-  //       {
-  //         code: convertSource(source),
-  //         testCases: formattedTestCases(problem.testCases, "SUBMIT"),
-  //         action: "submit",
-  //         func: problem.func,
-  //       }
-  //     );
-
-  //     if (!response) {
-  //       throw new Error("Failed to run test cases");
-  //     }
-
-  //     const data = await response.data;
-  //     setResults(data);
-  //     setIsSubmitting(false);
-  //   } catch (error) {
-  //     console.error("Error running test cases:", error);
-  //     setIsSubmitting(false);
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  // const restrictions: {}[] = [];
-  // const handleEditorDidMount = (editor, monaco) => {
-  //   monacoRef.current = editor;
-  //   const constrainedInstance = constrainedEditor(monaco);
-  //   const model = editor.getModel();
-  //   constrainedInstance.initializeIn(editor);
-  //   restrictions.push({
-  //     range: [1, 1, 4, 1],
-  //     allowMultiline: true
-  //   });
-
-  //   constrainedInstance.addRestrictionsTo(model, restrictions);
-  // };
+  
+  const submissionMutation = useMutation({
+    mutationFn: (submission:Submission) => postSubmission(submission, axiosSecure),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["submissions"]});
+      // console.log("Submission successful:", data);
+    },
+    onError: (error) => {
+      console.error("Error submitting:", error);
+    },
+  })
 
   const options: editor.IStandaloneEditorConstructionOptions = {
     acceptSuggestionOnCommitCharacter: true,
@@ -170,7 +169,6 @@ const Editor = ({ problem, editorTheme }) => {
   };
 
   useEffect(() => {
-    
     const lang = localStorage.getItem("language");
 
     if (lang) {
@@ -190,30 +188,12 @@ const Editor = ({ problem, editorTheme }) => {
   const setLanguageHandler = (lang) => {
     setLanguage(lang);
     // console.log(`${problem.id}_${language}`)
-    setSource(localStorage.getItem(`${problem.id}_${lang}`) ? localStorage.getItem(`${problem.id}_${lang}`) : problem.defaultCode[lang]);
+    setSource(
+      localStorage.getItem(`${problem.id}_${lang}`)
+        ? localStorage.getItem(`${problem.id}_${lang}`)
+        : problem.defaultCode[lang]
+    );
   };
-
-
-//   {
-//     "output": [
-//         {
-//             "error": null,
-//             "output": "Hello, World!",
-//             "status": "passed",
-//             "stderr": "",
-//             "stdout": [
-//                 ""
-//             ],
-//             "yourOutput": "Hello, World!"
-//         }
-//     ],
-//     "passedTestCases": 1,
-//     "pythonVersion": "3.12.7",
-//     "runtime": 0,
-//     "status": "Accepted",
-//     "totalTestCases": 1
-// }
-  
 
   return (
     <ResizablePanel defaultSize={50}>
@@ -221,8 +201,8 @@ const Editor = ({ problem, editorTheme }) => {
         <ResizablePanel defaultSize={60}>
           <div className="rounded-xl dark:bg-zinc-900 border overflow-hidden pb-2">
             <SolutionHead
-              onRun={()=>onRun('run')}
-              onSubmit={()=> onRun('submit')}
+              onRun={() => onRun("run")}
+              onSubmit={() => onRun("submit")}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
             />
@@ -262,7 +242,6 @@ const Editor = ({ problem, editorTheme }) => {
 };
 
 async function Runner(language, source, axiosSecure, testCases, action, func) {
-  
   if (language === "python") {
     try {
       const response = await axiosSecure.post(
@@ -274,31 +253,26 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
           func,
         }
       );
-  
+
       if (!response) {
         console.log(await response);
         throw new Error("Failed to run test cases");
       }
-  
-      const data =  await response.data;
+
+      const data = await response.data;
       return data;
-      
     } catch (error) {
-      console.log("ERRRRRRRRRRRRROOOOOOOOORRRRRRRRRRR")
-      console.log(error)
+      console.log("ERRRRRRRRRRRRROOOOOOOOORRRRRRRRRRR");
+      console.log(error);
     }
-  }
-  else {
+  } else {
     try {
-      const response = await axiosSecure.post(
-        `/api/compiler/${language}`,
-        {
-          code: convertSource(source),
-          testCases,
-          action,
-          func,
-        }
-      );
+      const response = await axiosSecure.post(`/api/compiler/${language}`, {
+        code: convertSource(source),
+        testCases,
+        action,
+        func,
+      });
 
       if (!response) {
         throw new Error("Failed to run test cases");
@@ -307,9 +281,8 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
       const data = await response.data;
       // console.log(data);
       return data;
-
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
 }
