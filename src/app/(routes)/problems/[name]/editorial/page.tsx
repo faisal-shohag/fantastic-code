@@ -1,8 +1,9 @@
+import NoData from "@/components/skeletons/not-data";
 
 const Editorial = () => {
     return (
         <div>
-            Editorial
+            <NoData/>
         </div>
     );
 };

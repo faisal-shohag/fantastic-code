@@ -176,3 +176,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+
+/* In your global.css or component styles */
+pre[class*="language-"] {
+  white-space: pre-wrap !important;       /* CSS3 */
+  word-wrap: break-word !important;       /* IE 5.5-7 */
+  word-break: break-all !important;
+}
+
+code[class*="language-"] {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+}

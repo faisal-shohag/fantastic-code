@@ -1,8 +1,9 @@
+import NoData from "@/components/skeletons/not-data";
 
 const Solutions = () => {
     return (
         <div>
-            Solutions
+           <NoData/>
         </div>
     );
 };

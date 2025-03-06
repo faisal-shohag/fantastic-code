@@ -29,7 +29,7 @@ export async function GET(
   
  
   
-      return NextResponse.json(submissions)
+      return NextResponse.json(submissions, {status: 200})
     } catch (error) {
       console.error('Error fetching problem:', error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

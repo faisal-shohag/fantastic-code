@@ -21,7 +21,7 @@ export async function POST(req:Request) {
 
         return NextResponse.json({
             msg: 'Submission added successfully',
-            data: data
+            data: newSubmission
         })
         
     } catch (error) {

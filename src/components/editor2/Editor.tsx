@@ -14,6 +14,7 @@ import useAxiosSecure from "@/hooks/useAxiosSecure";
 import { useMutation, useQueryClient } from "react-query";
 import { Submission } from "@/lib/types";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const formattedTestCases = (testcases, action) => {
   const runTestCases = testcases.filter((tc) => tc.type === action);
@@ -50,6 +51,8 @@ const Editor = ({ problem, editorTheme }) => {
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient()
   const {data: session} = useSession()
+  const router = useRouter()
+
 
 
   const onRun = async (action) => {
@@ -75,6 +78,9 @@ const Editor = ({ problem, editorTheme }) => {
         problem.func
       );
       setResults(data);
+
+      
+      
       
       if (action === "run") setIsRunning(false);
       else{ 
@@ -104,9 +110,10 @@ const Editor = ({ problem, editorTheme }) => {
   
   const submissionMutation = useMutation({
     mutationFn: (submission:Submission) => postSubmission(submission, axiosSecure),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({queryKey: ["submissions"]});
-      // console.log("Submission successful:", data);
+      router.push(`/problems/${problem.unique_title}/submissions/${data.data.id}`)
+
     },
     onError: (error) => {
       console.error("Error submitting:", error);
