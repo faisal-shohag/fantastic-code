@@ -30,14 +30,23 @@ export default function ProblemPage() {
         <MarkdownView content={problem.description} />
       </div>
 
-      {problem.hints.length > 0 && (
+      {(problem.hints.length > 0 && problem.hints[0].content !== '' ) && (
         <div className="mt-5 pb-10">
-          <div className="font-bold flex items-center gap-2 text-muted-foreground"><span className="text-yellow-500"><FaLightbulb /></span> Hints</div>
+          <div className="font-bold flex items-center gap-1 text-muted-foreground"><span className="text-yellow-500"><FaLightbulb /></span> 
+          <div>
+            <div>Hints</div>
+          </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Please try to solve the problem before looking at the hints. Hints should be used as a last resort.
+          </div>
           <Accordion type="single" collapsible>
             {problem.hints.map((hint, index) => (
               <AccordionItem key={hint.id} value={`item-${index + 1}`}>
                 <AccordionTrigger className="text-muted-foreground">Hint: {index + 1}</AccordionTrigger>
-                <AccordionContent className="">{hint.content}</AccordionContent>
+                <AccordionContent className="">
+                  <MarkdownView content={hint.content} />
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
