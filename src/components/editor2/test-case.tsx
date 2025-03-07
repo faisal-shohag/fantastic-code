@@ -1,17 +1,19 @@
 "use client";
 
-import { TestTubeDiagonalIcon } from "lucide-react";
+import { TestTubeDiagonalIcon, Edit2Icon, CheckIcon } from "lucide-react";
 import { useState } from "react";
 import { GoDotFill } from "react-icons/go";
+import { FaPlus } from "react-icons/fa6";
 
-export default function TestCase({ testcases, results, isRunning, state, language }) {
-  // console.log(isRunning)
-  // console.log(results)
-  // console.log(testcases)
-  // console.log(state)
-  // console.log(results)
-  // console.log(isRunning)
-
+export default function TestCaseComponent({ 
+  testcases, 
+  results, 
+  isRunning, 
+  state, 
+  language, 
+  handleNewTestCase,
+  handleUpdateTestCase
+}) {
   return (
     <div className="border h-full dark:bg-zinc-900 rounded-lg flex overflow-auto flex-col">
       <div className="p-2 bg-slate-300 dark:bg-zinc-800 flex items-center gap-2 px-3">
@@ -22,7 +24,14 @@ export default function TestCase({ testcases, results, isRunning, state, languag
         </span>
       </div>
       <div>
-        <TestCasesView state={state} testCases={testcases} results={results} language={language} />
+        <TestCasesView 
+          state={state} 
+          testCases={testcases} 
+          results={results} 
+          language={language}  
+          handleNewTestCase={handleNewTestCase}
+          handleUpdateTestCase={handleUpdateTestCase}
+        />
       </div>
     </div>
   );
@@ -59,6 +68,8 @@ interface TestCasesViewProps {
   results: Results;
   state: string;
   language: string;
+  handleNewTestCase: (testCase: TestCase) => void;
+  handleUpdateTestCase: (testCase: TestCase) => void;
 }
 
 const TestCasesView = ({
@@ -66,24 +77,55 @@ const TestCasesView = ({
   results,
   state,
   language,
+  handleNewTestCase,
+  handleUpdateTestCase
 }: TestCasesViewProps): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedInput, setEditedInput] = useState("");
+  const [editedOutput, setEditedOutput] = useState("");
 
-  testCases = testCases.filter((tc) => tc.type === state);
+  const filteredTestCases = testCases.filter((tc) => tc.type === state);
 
   const getStatusColor = (status: string) => {
     return status === "passed" ? "text-green-500" : "text-red-500";
   };
 
   const currentResult = results?.output?.[activeIndex];
+  const currentTestCase = filteredTestCases[activeIndex];
+
+  // Initialize edit fields when a test case becomes active
+  const startEditing = () => {
+    if (currentTestCase) {
+      setEditedInput(currentTestCase.input);
+      setEditedOutput(currentTestCase.output);
+      setIsEditing(true);
+    }
+  };
+
+  // Save the edited test case
+  const saveTestCase = () => {
+    if (currentTestCase) {
+      const updatedTestCase = {
+        ...currentTestCase,
+        input: editedInput,
+        output: editedOutput
+      };
+      handleUpdateTestCase(updatedTestCase);
+      setIsEditing(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex gap-5 p-2 overflow-x-scroll">
-        {testCases.map((tc, index) => (
+      <div className="flex gap-5 p-2 items-center overflow-x-scroll">
+        {filteredTestCases.map((tc, index) => (
           <div key={tc.id}>
             <div
-              onClick={() => setActiveIndex(index)}
+              onClick={() => {
+                setActiveIndex(index);
+                setIsEditing(false); // Exit edit mode when switching test cases
+              }}
               className={`${
                 activeIndex === index ? "dark:bg-zinc-800 bg-slate-300" : ""
               } flex items-center cursor-pointer px-3 py-1 text-xs w-[90px] justify-center rounded-lg font-medium hover:dark:bg-zinc-800 hover:bg-slate-300`}
@@ -101,40 +143,96 @@ const TestCasesView = ({
             </div>
           </div>
         ))}
-      </div>
-
-   
-        {currentResult && (
-          <div className="flex items-center gap-2 px-2">
-            <div className={getStatusColor(currentResult.status)}>
-              Status: {currentResult.status}
-            </div>
-            <div className="text-muted-foreground text-xs">
-              Runtime: {results.runtime} ms | {language} {results.version}
-            </div>
+        {state === "RUN" && (
+          <div 
+            onClick={() => { 
+              if (filteredTestCases.length > 0) {
+                const t = {
+                  ...filteredTestCases[activeIndex], 
+                  id: testCases[testCases.length-1].id + 1
+                };
+                handleNewTestCase(t);
+              }
+            }} 
+            className="text-sm cursor-pointer px-3 py-1 justify-center rounded-lg font-medium hover:dark:bg-zinc-800 hover:bg-slate-300"
+          >
+            <FaPlus />
           </div>
         )}
-    
+      </div>
+
+      {currentResult && (
+        <div className="flex items-center gap-2 px-2">
+          <div className={getStatusColor(currentResult.status)}>
+            Status: {currentResult.status}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            Runtime: {results.runtime} ms | {language} {results.version}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {testCases[activeIndex] && (<>
-          <div className="dark:bg-zinc-800 bg-slate-300 px-3 py-1 rounded-lg">
-            <div className="text-sm dark:text-zinc-500 mb-1">Input:</div>
-            <div className="font-mono">{testCases[activeIndex].input}</div>
-          </div>
-          <div className="dark:bg-zinc-800 bg-slate-300 rounded-lg py-1 px-3">
+        {currentTestCase && !isEditing && (
+          <>
+            <div className="dark:bg-zinc-800 bg-slate-300 px-3 py-1 rounded-lg relative group">
+              <div className="text-sm dark:text-zinc-500 mb-1 flex justify-between items-center">
+                <span>Input:</span>
+                {state === "RUN" && (
+                  <button 
+                    onClick={startEditing}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2Icon size={14} className="text-blue-500" />
+                  </button>
+                )}
+              </div>
+              <div className="font-mono">{currentTestCase.input}</div>
+            </div>
+            <div className="dark:bg-zinc-800 bg-slate-300 rounded-lg py-1 px-3">
               <div className="text-sm dark:text-zinc-500 mb-1">
                 Expected Output:
               </div>
-              <div className="font-mono">{testCases[activeIndex].output}</div>
+              <div className="font-mono">{currentTestCase.output}</div>
             </div>
           </>
         )}
 
-        {currentResult && testCases[activeIndex] && (
+        {currentTestCase && isEditing && (
           <>
-          
+            <div className="dark:bg-zinc-800 bg-slate-300 px-3 py-1 rounded-lg">
+              <div className="text-sm dark:text-zinc-500 mb-1 flex justify-between items-center">
+                <span>Input:</span>
+                <button 
+                  onClick={saveTestCase}
+                  className="text-green-500"
+                >
+                  <CheckIcon size={14} />
+                </button>
+              </div>
+              <textarea
+                value={editedInput}
+                onChange={(e) => setEditedInput(e.target.value)}
+                className="w-full bg-transparent font-mono border dark:border-zinc-700 p-1 rounded focus:outline-none focus:border-blue-500"
+                rows={3}
+              />
+            </div>
+            <div className="dark:bg-zinc-800 bg-slate-300 rounded-lg py-1 px-3">
+              <div className="text-sm dark:text-zinc-500 mb-1">
+                Expected Output:
+              </div>
+              <textarea
+                value={editedOutput}
+                onChange={(e) => setEditedOutput(e.target.value)}
+                className="w-full bg-transparent font-mono border dark:border-zinc-700 p-1 rounded focus:outline-none focus:border-blue-500"
+                rows={3}
+              />
+            </div>
+          </>
+        )}
 
+        {currentResult && currentTestCase && (
+          <>
             {currentResult.stdout?.length > 0 &&
               currentResult.stdout[0] !== "" && (
                 <div className="dark:bg-zinc-800 bg-slate-300 px-3 py-1 rounded-lg ">
@@ -175,11 +273,13 @@ const TestCasesView = ({
         )}
       </div>
 
-      {results?.output?.length && <div className="p-2 border-t dark:border-zinc-800 mt-2">
-        <div className="text-sm text-muted-foreground">
-          Test Cases: {results.passedTestCases}/{results.totalTestCases} passed
+      {results?.output?.length > 0 && (
+        <div className="p-2 border-t dark:border-zinc-800 mt-2">
+          <div className="text-sm text-muted-foreground">
+            Test Cases: {results.passedTestCases}/{results.totalTestCases} passed
+          </div>
         </div>
-      </div>}
+      )}
     </div>
   );
 };

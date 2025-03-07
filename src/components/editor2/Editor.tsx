@@ -9,12 +9,12 @@ import {
 import EditorHeader from "./editor-head";
 import { useEffect, useState } from "react";
 import SolutionHead from "../editor/SolutionHead";
-import TestCase from "./test-case";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
 import { useMutation, useQueryClient } from "react-query";
-import { Submission } from "@/lib/types";
+import { Submission, TestCase } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import TestCaseComponent from "./test-case";
 
 const formattedTestCases = (testcases, action) => {
   const runTestCases = testcases.filter((tc) => tc.type === action);
@@ -49,11 +49,10 @@ const Editor = ({ problem, editorTheme }) => {
   const [state, setStatus] = useState("RUN");
   const [language, setLanguage] = useState("javascript");
   const axiosSecure = useAxiosSecure();
-  const queryClient = useQueryClient()
-  const {data: session} = useSession()
-  const router = useRouter()
-
-
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
 
   const onRun = async (action) => {
     localStorage.setItem(problem.id, source);
@@ -62,28 +61,27 @@ const Editor = ({ problem, editorTheme }) => {
     else setStatus("SUBMIT");
 
     if (source == "") return;
-    const testCases = formattedTestCases(
-      problem.testCases,
+    const filteredTestCases = formattedTestCases(
+      testCases,
       action === "run" ? "RUN" : "SUBMIT"
     );
+    
     try {
       if (action === "run") setIsRunning(true);
       else setIsSubmitting(true);
+
       const data = await Runner(
         language,
         convertSource(source),
         axiosSecure,
-        testCases,
+        filteredTestCases,
         action,
         problem.func
       );
       setResults(data);
-
-      
-      
       
       if (action === "run") setIsRunning(false);
-      else{ 
+      else { 
         setIsSubmitting(false);
         submissionMutation.mutate({
           problemId: problem.id,
@@ -95,7 +93,7 @@ const Editor = ({ problem, editorTheme }) => {
           percentage: Number((data.passedTestCases / (data.totalTestCases)*100).toFixed(3)),
           userId: session?.user?.id || "",
           memory: 0
-        })
+        });
       }
     } catch (error) {
       console.log(error);
@@ -109,16 +107,15 @@ const Editor = ({ problem, editorTheme }) => {
   };
   
   const submissionMutation = useMutation({
-    mutationFn: (submission:Submission) => postSubmission(submission, axiosSecure),
+    mutationFn: (submission: Submission) => postSubmission(submission, axiosSecure),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({queryKey: ["submissions"]});
-      router.push(`/problems/${problem.unique_title}/submissions/${data.data.id}`)
-
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      router.push(`/problems/${problem.unique_title}/submissions/${data.data.id}`);
     },
     onError: (error) => {
       console.error("Error submitting:", error);
     },
-  })
+  });
 
   const options: editor.IStandaloneEditorConstructionOptions = {
     acceptSuggestionOnCommitCharacter: true,
@@ -171,13 +168,13 @@ const Editor = ({ problem, editorTheme }) => {
   };
 
   const onChange = (value) => {
-    localStorage.setItem(`${problem.id}_${language}`, source);
+    localStorage.setItem(`${problem.id}_${language}`, value);
     setSource(value);
   };
 
   useEffect(() => {
     const lang = localStorage.getItem("language");
-
+    setTestCases(problem.testCases);
     if (lang) {
       setLanguage(lang);
       const storedSource = localStorage.getItem(`${problem.id}_${lang}`);
@@ -190,16 +187,28 @@ const Editor = ({ problem, editorTheme }) => {
       setLanguage(language);
       setSource(problem.defaultCode[language]);
     }
-  }, [problem.id, problem.defaultCode]);
+  }, [problem.id, problem.defaultCode, problem.testCases]);
 
   const setLanguageHandler = (lang) => {
     setLanguage(lang);
-    // console.log(`${problem.id}_${language}`)
+    localStorage.setItem("language", lang);
     setSource(
       localStorage.getItem(`${problem.id}_${lang}`)
         ? localStorage.getItem(`${problem.id}_${lang}`)
         : problem.defaultCode[lang]
     );
+  };
+
+  const handleNewTestCase = (testCase) => {
+    const updatedTestCases = [...testCases, testCase];
+    setTestCases(updatedTestCases);
+  };
+
+  const handleUpdateTestCase = (updatedTestCase:TestCase) => {
+    const updatedTestCases = testCases.map(tc => 
+      tc.id === updatedTestCase.id ? updatedTestCase : tc
+    );
+    setTestCases(updatedTestCases);
   };
 
   return (
@@ -225,7 +234,6 @@ const Editor = ({ problem, editorTheme }) => {
               options={options}
               language={language}
               value={source.toString()}
-              // onMount={handleEditorDidMount}
             />
           </div>
         </ResizablePanel>
@@ -235,9 +243,11 @@ const Editor = ({ problem, editorTheme }) => {
           withHandle
         />
         <ResizablePanel defaultSize={40}>
-          <TestCase
+          <TestCaseComponent
+            handleNewTestCase={handleNewTestCase}
+            handleUpdateTestCase={handleUpdateTestCase}
             state={state}
-            testcases={problem.testCases}
+            testcases={testCases}
             results={results}
             isRunning={isRunning}
             language={language}
@@ -286,7 +296,6 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
       }
 
       const data = await response.data;
-      // console.log(data);
       return data;
     } catch (error) {
       console.log(error);

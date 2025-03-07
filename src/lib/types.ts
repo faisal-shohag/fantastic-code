@@ -35,6 +35,7 @@ export interface ProblemData {
 
 
 export interface TestCase {
+   id: number,
     input: string
     output: string
     type: string
