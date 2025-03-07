@@ -1,13 +1,12 @@
+import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
 import { editor } from "monaco-editor";
-
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
 import EditorHeader from "./editor-head";
-import { useEffect, useState } from "react";
 import SolutionHead from "../editor/SolutionHead";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
 import { useMutation, useQueryClient } from "react-query";
@@ -16,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import TestCaseComponent from "./test-case";
 
+// Utility functions remain the same
 const formattedTestCases = (testcases, action) => {
   const runTestCases = testcases.filter((tc) => tc.type === action);
   return runTestCases.map((tc) => ({
@@ -41,6 +41,56 @@ const postSubmission = async (submission, axiosSecure) => {
   }
 };
 
+// Type definitions for editor settings
+type AutoIndentType = "advanced" | "none" | "keep" | "brackets" | "full";
+type CursorBlinkingType = "blink" | "smooth" | "phase" | "expand" | "solid";
+type CursorStyleType = "line" | "block" | "underline" | "line-thin" | "block-outline" | "underline-thin";
+type WordWrapType = "off" | "on" | "wordWrapColumn" | "bounded";
+type ThemeType = "vs" | "vs-dark" | "hc-black" | "hc-light";
+type CursorAnimationType = "off" | "on"  | "explicit"  | undefined;
+
+interface EditorSettingsType {
+  editor: {
+    fontSize: number;
+    tabSize: number;
+    wordWrap: WordWrapType;
+    lineNumbers: boolean;
+    minimap: boolean;
+    bracketPairs: boolean;
+    formatOnSave: boolean;
+    smoothScrolling: boolean;
+    cursorSmoothCaretAnimation: CursorAnimationType;
+    autoIndent: AutoIndentType;
+  };
+  appearance: {
+    theme: ThemeType;
+    fontFamily: string;
+    cursorStyle: CursorStyleType;
+    cursorBlinking: CursorBlinkingType;
+  };
+}
+
+const DEFAULT_EDITOR_SETTINGS: EditorSettingsType = {
+  editor: {
+    fontSize: 14,
+    tabSize: 2,
+    wordWrap: "on",
+    lineNumbers: true,
+    minimap: true,
+    bracketPairs: true,
+    formatOnSave: false,
+    smoothScrolling: true,
+    cursorSmoothCaretAnimation: "on",
+    autoIndent: "advanced",
+  },
+  appearance: {
+    theme: "vs-dark",
+    fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+    cursorStyle: "line",
+    cursorBlinking: "phase",
+  }
+};
+
 const Editor = ({ problem, editorTheme }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,11 +98,102 @@ const Editor = ({ problem, editorTheme }) => {
   const [results, setResults] = useState([]);
   const [state, setStatus] = useState("RUN");
   const [language, setLanguage] = useState("javascript");
+  const [editorSettings, setEditorSettings] = useState<EditorSettingsType>(DEFAULT_EDITOR_SETTINGS);
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const router = useRouter();
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+
+  // Load editor settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("editorSettings");
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        // Ensure type safety when loading from localStorage
+        setEditorSettings({
+          editor: {
+            fontSize: parsedSettings.editor.fontSize || DEFAULT_EDITOR_SETTINGS.editor.fontSize,
+            tabSize: parsedSettings.editor.tabSize || DEFAULT_EDITOR_SETTINGS.editor.tabSize,
+            wordWrap: (parsedSettings.editor.wordWrap as WordWrapType) || DEFAULT_EDITOR_SETTINGS.editor.wordWrap,
+            lineNumbers: !!parsedSettings.editor.lineNumbers,
+            minimap: !!parsedSettings.editor.minimap,
+            bracketPairs: !!parsedSettings.editor.bracketPairs,
+            formatOnSave: !!parsedSettings.editor.formatOnSave,
+            smoothScrolling: !!parsedSettings.editor.smoothScrolling,
+            cursorSmoothCaretAnimation: (parsedSettings.editor.cursorSmoothCaretAnimation as CursorAnimationType) || DEFAULT_EDITOR_SETTINGS.editor.cursorSmoothCaretAnimation,
+            autoIndent: (parsedSettings.editor.autoIndent as AutoIndentType) || DEFAULT_EDITOR_SETTINGS.editor.autoIndent,
+          },
+          appearance: {
+            theme: (parsedSettings.appearance.theme as ThemeType) || DEFAULT_EDITOR_SETTINGS.appearance.theme,
+            fontFamily: parsedSettings.appearance.fontFamily || DEFAULT_EDITOR_SETTINGS.appearance.fontFamily,
+            cursorStyle: (parsedSettings.appearance.cursorStyle as CursorStyleType) || DEFAULT_EDITOR_SETTINGS.appearance.cursorStyle,
+            cursorBlinking: (parsedSettings.appearance.cursorBlinking as CursorBlinkingType) || DEFAULT_EDITOR_SETTINGS.appearance.cursorBlinking,
+          }
+        });
+      } catch (e) {
+        console.error("Failed to parse saved settings:", e);
+      }
+    }
+  }, []);
+
+  // Build editor options by combining defaults with user settings
+  const options: editor.IStandaloneEditorConstructionOptions = {
+    acceptSuggestionOnCommitCharacter: true,
+    acceptSuggestionOnEnter: "on",
+    accessibilitySupport: "auto",
+    autoIndent: editorSettings.editor.autoIndent,
+    automaticLayout: true,
+    codeLens: true,
+    colorDecorators: true,
+    contextmenu: true,
+    cursorBlinking: editorSettings.appearance.cursorBlinking,
+    cursorSmoothCaretAnimation: editorSettings.editor.cursorSmoothCaretAnimation,
+    cursorStyle: editorSettings.appearance.cursorStyle,
+    disableLayerHinting: false,
+    disableMonospaceOptimizations: false,
+    dragAndDrop: false,
+    fixedOverflowWidgets: false,
+    folding: true,
+    foldingStrategy: "auto",
+    fontFamily: editorSettings.appearance.fontFamily,
+    fontSize: editorSettings.editor.fontSize,
+    fontLigatures: false,
+    formatOnPaste: false,
+    formatOnType: editorSettings.editor.formatOnSave,
+    hideCursorInOverviewRuler: false,
+    lineNumbers: editorSettings.editor.lineNumbers ? "on" : "off",
+    links: true,
+    minimap: { enabled: editorSettings.editor.minimap },
+    mouseWheelZoom: false,
+    multiCursorMergeOverlapping: true,
+    multiCursorModifier: "alt",
+    overviewRulerBorder: true,
+    overviewRulerLanes: 2,
+    quickSuggestions: true,
+    quickSuggestionsDelay: 100,
+    readOnly: false,
+    renderControlCharacters: false,
+    renderFinalNewline: "on",
+    renderLineHighlight: "all",
+    renderWhitespace: "none",
+    revealHorizontalRightPadding: 30,
+    roundedSelection: true,
+    scrollBeyondLastColumn: 5,
+    scrollBeyondLastLine: true,
+    selectOnLineNumbers: true,
+    selectionHighlight: true,
+    showFoldingControls: "mouseover",
+    smoothScrolling: editorSettings.editor.smoothScrolling,
+    suggestOnTriggerCharacters: true,
+    tabSize: editorSettings.editor.tabSize,
+    wordBasedSuggestions: "allDocuments",
+    wordWrap: editorSettings.editor.wordWrap,
+    wordWrapColumn: 50,
+    wrappingIndent: "same",
+    bracketPairColorization: { enabled: editorSettings.editor.bracketPairs },
+  };
 
   const onRun = async (action) => {
     localStorage.setItem(problem.id, source);
@@ -117,56 +258,6 @@ const Editor = ({ problem, editorTheme }) => {
     },
   });
 
-  const options: editor.IStandaloneEditorConstructionOptions = {
-    acceptSuggestionOnCommitCharacter: true,
-    acceptSuggestionOnEnter: "on",
-    accessibilitySupport: "auto",
-    autoIndent: "advanced",
-    automaticLayout: true,
-    codeLens: true,
-    colorDecorators: true,
-    contextmenu: true,
-    cursorBlinking: "phase",
-    cursorSmoothCaretAnimation: "on",
-    cursorStyle: "line",
-    disableLayerHinting: false,
-    disableMonospaceOptimizations: false,
-    dragAndDrop: false,
-    fixedOverflowWidgets: false,
-    folding: true,
-    foldingStrategy: "auto",
-    fontLigatures: false,
-    formatOnPaste: false,
-    formatOnType: false,
-    hideCursorInOverviewRuler: false,
-    links: true,
-    mouseWheelZoom: false,
-    multiCursorMergeOverlapping: true,
-    multiCursorModifier: "alt",
-    overviewRulerBorder: true,
-    overviewRulerLanes: 2,
-    quickSuggestions: true,
-    quickSuggestionsDelay: 100,
-    readOnly: false,
-    renderControlCharacters: false,
-    renderFinalNewline: "on",
-    renderLineHighlight: "all",
-    renderWhitespace: "none",
-    revealHorizontalRightPadding: 30,
-    roundedSelection: true,
-    scrollBeyondLastColumn: 5,
-    scrollBeyondLastLine: true,
-    selectOnLineNumbers: true,
-    selectionHighlight: true,
-    showFoldingControls: "mouseover",
-    smoothScrolling: true,
-    suggestOnTriggerCharacters: true,
-    wordBasedSuggestions: "allDocuments",
-    wordWrap: "on",
-    wordWrapColumn: 50,
-    wrappingIndent: "same",
-  };
-
   const onChange = (value) => {
     localStorage.setItem(`${problem.id}_${language}`, value);
     setSource(value);
@@ -211,6 +302,9 @@ const Editor = ({ problem, editorTheme }) => {
     setTestCases(updatedTestCases);
   };
 
+  // Get the current theme from settings or fallback to the prop
+  const currentTheme = editorSettings.appearance.theme || (editorTheme === "dark" ? "vs-dark" : "vs-light");
+
   return (
     <ResizablePanel defaultSize={50}>
       <ResizablePanelGroup direction="vertical">
@@ -227,7 +321,7 @@ const Editor = ({ problem, editorTheme }) => {
               setLanguageHandler={setLanguageHandler}
             />
             <MonacoEditor
-              theme={editorTheme === "dark" ? "vs-dark" : "vs-light"}
+              theme={currentTheme}
               onChange={onChange}
               height="80vh"
               defaultLanguage={language}
