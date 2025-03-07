@@ -52,7 +52,7 @@ const ProblemLayoutContent = ({ children }) => {
        
         <ResizablePanelGroup
           direction="horizontal"
-          className="w-full rounded-lg"
+          className="w-full rounded-lg overflow-y-hidden"
         >
            
           <ResizablePanel className='overflow-y-hidden' defaultSize={50} >
