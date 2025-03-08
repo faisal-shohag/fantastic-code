@@ -85,7 +85,7 @@ const DEFAULT_EDITOR_SETTINGS: EditorSettingsType = {
   },
   appearance: {
     theme: "vs-dark",
-    fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+    fontFamily: "'Fira Code', monospace",
     cursorStyle: "line",
     cursorBlinking: "phase",
   }
@@ -217,7 +217,9 @@ const Editor = ({ problem, editorTheme }) => {
         axiosSecure,
         filteredTestCases,
         action,
-        problem.func
+        problem.func,
+        problem.timeLimit,
+        problem.memoryLimit
       );
       setResults(data);
       
@@ -233,7 +235,7 @@ const Editor = ({ problem, editorTheme }) => {
           tc: data,
           percentage: Number((data.passedTestCases / (data.totalTestCases)*100).toFixed(3)),
           userId: session?.user?.id || "",
-          memory: 0
+          memory: data.memory
         });
       }
     } catch (error) {
@@ -352,7 +354,7 @@ const Editor = ({ problem, editorTheme }) => {
   );
 };
 
-async function Runner(language, source, axiosSecure, testCases, action, func) {
+async function Runner(language, source, axiosSecure, testCases, action, func, timeLimit, memoryLimit) {
   if (language === "python") {
     try {
       const response = await axiosSecure.post(
@@ -362,6 +364,8 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
           testCases,
           action,
           func,
+         timeLimit,
+          memoryLimit
         }
       );
 
@@ -371,6 +375,7 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
       }
 
       const data = await response.data;
+      
       return data;
     } catch (error) {
       console.log("ERRRRRRRRRRRRROOOOOOOOORRRRRRRRRRR");
@@ -378,11 +383,13 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
     }
   } else {
     try {
-      const response = await axiosSecure.post(`/api/compiler/${language}`, {
+      const response = await axiosSecure.post(`/api/compiler/${language}-v2`, {
         code: convertSource(source),
         testCases,
         action,
         func,
+        timeLimit,
+        memoryLimit
       });
 
       if (!response) {
@@ -390,6 +397,7 @@ async function Runner(language, source, axiosSecure, testCases, action, func) {
       }
 
       const data = await response.data;
+      // console.log(data);
       return data;
     } catch (error) {
       console.log(error);

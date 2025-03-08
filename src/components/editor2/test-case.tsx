@@ -48,6 +48,8 @@ interface TestCase {
 interface TestResult {
   error: string | null;
   output: string;
+  runtime: number;
+  memoryUsed: number;
   status: "passed" | "failed";
   stderr: string;
   stdout: string[];
@@ -115,7 +117,7 @@ const TestCasesView = ({
       setIsEditing(false);
     }
   };
-
+ 
   return (
     <div className="h-full flex flex-col">
       <div className="flex gap-5 p-2 items-center overflow-x-scroll">
@@ -167,7 +169,7 @@ const TestCasesView = ({
             Status: {currentResult.status}
           </div>
           <div className="text-muted-foreground text-xs">
-            Runtime: {results.runtime} ms | {language} {results.version}
+            Runtime: {currentResult.runtime} ms | Memory: {currentResult.memoryUsed} kb | {language} {results.version}
           </div>
         </div>
       )}

@@ -20,7 +20,8 @@ model Problem {
   serial       Int
   userId       String
   defaultCode  Json
-  timelimit    Int                   @default(1)
+  timelimit    Int                   @default(100)
+  memorylimit  Int                   @default(50)
   comments     Comment[]
   companies    CompaniesOnProblems[]
   editorials   Editorial[]

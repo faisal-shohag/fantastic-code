@@ -54,6 +54,8 @@ interface TransformedProblem {
   updatedAt: Date
   userId: string
   func: string
+  timeLimit: number
+  memoryLimit: number
   tags: Array<{
     id: number
     name: string
@@ -98,6 +100,7 @@ export async function GET(
         where: {
           unique_title: name,
         },
+        
         include: {
             tags: {
               select: {
@@ -126,6 +129,7 @@ export async function GET(
               },
             },
             TestCases: true,
+            
             author: {
               select: {
                 id: true,
@@ -163,6 +167,8 @@ export async function GET(
         author: problem.author,
         func: problem.func || '',
         testCases: problem.TestCases,
+        timeLimit: problem.timelimit,
+        memoryLimit: problem.memorylimit,
         stats: {
           likes: problem._count.likes,
           comments: problem._count.comments,
