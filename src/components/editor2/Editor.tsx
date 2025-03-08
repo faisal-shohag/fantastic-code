@@ -301,6 +301,7 @@ const Editor = ({ problem, editorTheme }) => {
     const updatedTestCases = testCases.map(tc => 
       tc.id === updatedTestCase.id ? updatedTestCase : tc
     );
+    // console.log(updatedTestCases)
     setTestCases(updatedTestCases);
   };
 
@@ -383,7 +384,7 @@ async function Runner(language, source, axiosSecure, testCases, action, func, ti
     }
   } else {
     try {
-      const response = await axiosSecure.post(`/api/compiler/${language}-v2`, {
+      const response = await axiosSecure.post(`/api/compiler/${language}`, {
         code: convertSource(source),
         testCases,
         action,

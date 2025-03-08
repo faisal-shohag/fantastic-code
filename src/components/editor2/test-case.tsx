@@ -119,7 +119,7 @@ const TestCasesView = ({
     
   };
 
-  console.log(results)
+  // console.log(results)
  
   return (
     <div className="h-full flex flex-col">
@@ -152,9 +152,10 @@ const TestCasesView = ({
           <div 
             onClick={() => { 
               if (filteredTestCases.length > 0) {
+                const maxId = Math.max(...testCases.map(item => item.id));
                 const t = {
                   ...filteredTestCases[activeIndex], 
-                  id: testCases[testCases.length-1].id + 1
+                  id: maxId + 1
                 };
                 handleNewTestCase(t);
               }
