@@ -16,8 +16,6 @@ type OutputResult = {
   memoryUsed: number; // Memory used in KB
   runtime: number; // Execution time in ms
 };
-
-// Function to execute user code in an isolated worker thread with timeout
 const executeInWorker = (code: string, funcName: string, input: string, timeLimit: number): Promise<{ result: string, error: string | null, memoryUsed: number, stdout: string[], timeLimitExceeded: boolean }> => {
   return new Promise((resolve) => {
     let isResolved = false;
@@ -26,15 +24,23 @@ const executeInWorker = (code: string, funcName: string, input: string, timeLimi
     const worker = new Worker(
       `
       const { parentPort } = require('worker_threads');
-
+    
       parentPort.on('message', ({ code, funcName, input }) => {
         const stdout = [];
         // Override console.log to capture output
         const originalConsoleLog = console.log;
         console.log = (...args) => {
-          stdout.push(args.join(' '));
+          // Convert all arguments to strings properly, handling objects and arrays
+          const stringArgs = args.map(arg => {
+            if (typeof arg === 'object' && arg !== null) {
+              // Convert objects and arrays to JSON strings
+              return JSON.stringify(arg);
+            }
+            return String(arg);
+          });
+          stdout.push(stringArgs.join(' '));
         };
-
+    
         try {
           // First, evaluate the code to define the function
           eval(code);
@@ -47,13 +53,28 @@ const executeInWorker = (code: string, funcName: string, input: string, timeLimi
           // Parse input properly
           const parsedInput = JSON.parse(input);
           
-          // Check input type and convert to number if it's a numeric string
-          const processedInput = parsedInput.map(item => {
-            if (typeof item === 'string' && !isNaN(Number(item))) {
-              return Number(item);
+          // Process input based on input type
+          let processedInput;
+          
+          // Check if the input is meant to be an array (starts with '[')
+          if (typeof parsedInput[0] === 'string' && parsedInput[0].trim().startsWith('[')) {
+            try {
+              // Parse the string as JSON if it's a valid JSON array
+              processedInput = [JSON.parse(parsedInput[0])];
+            } catch (e) {
+              // If not valid JSON, parse as a simple array by splitting
+              const arrayString = parsedInput[0].replace(/^\[|\]$/g, '').trim();
+              processedInput = [arrayString.split(',').map(item => item.trim())];
             }
-            return item;
-          });
+          } else {
+            // Handle other input types (numbers, strings, etc.)
+            processedInput = parsedInput.map(item => {
+              if (typeof item === 'string' && !isNaN(Number(item))) {
+                return Number(item);
+              }
+              return item;
+            });
+          }
           
           // Get the function reference from the current scope
           const fn = eval(funcName);
@@ -63,24 +84,26 @@ const executeInWorker = (code: string, funcName: string, input: string, timeLimi
           
           // Execute function with properly processed input
           const result = fn(...processedInput);
-
+    
           // End timing measurement
           const endTime = process.hrtime.bigint();
           const endMemory = process.memoryUsage().heapUsed;
-
+    
           // Calculate runtime in milliseconds
           const runtimeNs = Number(endTime - startTime);
           const runtimeMs = runtimeNs / 1e6; // Convert nanoseconds to milliseconds
-
+    
           // Calculate memory usage in KB
           const memoryUsageBytes = endMemory - startMemory;
           const memoryUsageKB = memoryUsageBytes / 1024; // Convert bytes to KB
-
+    
           // Restore original console.log
           console.log = originalConsoleLog;
-
+    
           parentPort.postMessage({
-            result: result !== undefined ? result.toString() : '',
+            // Fix for object output - use JSON.stringify for objects, toString for other types
+            result: result !== undefined ? 
+              (typeof result === 'object' ? JSON.stringify(result) : result.toString()) : '',
             error: null,
             memoryUsed: memoryUsageKB, // Memory usage in KB
             stdout,
@@ -101,7 +124,7 @@ const executeInWorker = (code: string, funcName: string, input: string, timeLimi
       });
     `,
       { eval: true } // Run inline worker code
-    );
+    )
 
     worker.on('message', (data) => {
       if (!isResolved) {
@@ -176,14 +199,23 @@ export async function POST(req: NextRequest) {
         func.replace(/_([a-z])/g, (m, p1) => p1.toUpperCase()) : 
         func;
       
-      // Create a proper input string that ensures numeric values
+      // Improved input processing for array inputs
       let inputValue = testCase.input;
-      // If the input is a number string, we don't need to wrap it in quotes
-      if (!isNaN(Number(inputValue))) {
-        inputValue = inputValue; // Keep it as is
-      } else if (typeof inputValue === 'string' && !inputValue.startsWith('"')) {
-        // If it's a string that doesn't already have quotes, add them
-        inputValue = `"${inputValue}"`;
+      
+      // Check if the input is meant to be an array
+      if (inputValue.includes(',') && (inputValue.includes('[') || !isNaN(Number(inputValue.split(',')[0])))) {
+        // For array inputs, make sure they're properly formatted as JSON arrays
+        if (!inputValue.startsWith('[')) {
+          inputValue = `[${inputValue}]`;
+        }
+      } else if (!isNaN(Number(inputValue))) {
+        // For numeric inputs, pass as is
+        inputValue = inputValue;
+      } else {
+        // For string inputs, add quotes if needed
+        if (!inputValue.startsWith('"')) {
+          inputValue = `"${inputValue}"`;
+        }
       }
       
       const { result, error, memoryUsed, stdout, timeLimitExceeded } = await executeInWorker(

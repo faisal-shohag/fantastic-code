@@ -116,7 +116,10 @@ const TestCasesView = ({
       handleUpdateTestCase(updatedTestCase);
       setIsEditing(false);
     }
+    
   };
+
+  console.log(results)
  
   return (
     <div className="h-full flex flex-col">
