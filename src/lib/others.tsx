@@ -1,3 +1,5 @@
+import { BiLogoJavascript, BiLogoPython } from "react-icons/bi";
+
 export const PColor = {
     "Accepted": '#22C55E',
     "Wrong Answer": '#EF4444',
@@ -13,4 +15,17 @@ export const dateFormatter = (date) => {
    d.pop()
    d.pop()
    return d.join(' ')
+}
+
+
+export const LANG = {
+    "javascript": {
+        name: "JavaScript",
+        icon: <BiLogoJavascript size={18}/>,
+    },
+    "python": {
+        name: "Python",
+        icon: <BiLogoPython/>
+    }
+
 }
