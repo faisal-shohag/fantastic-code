@@ -129,8 +129,14 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const page = parseInt(searchParams.get('page') || '1', 10)
   const limit = parseInt(searchParams.get('limit') || '10', 10)
-
+  const userId = searchParams.get('userId')
   const skip = (page - 1) * limit
+
+  console.log(userId)
+
+  if (!userId) {
+    return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+  }
 
   try {
     const problems = await prisma.problem.findMany({
@@ -143,14 +149,49 @@ export async function GET(req: Request) {
       }
     })
 
+    // Get all submissions for this user in a single query
+    const userSubmissions = await prisma.submissions.findMany({
+      where: {
+        userId: userId
+      },
+      select: {
+        problemId: true,
+        status: true
+      }
+    })
+
+    // Create maps for quick lookup
+    const problemStatus = new Map()
+    
+    // Process all submissions to determine status
+    userSubmissions.forEach(submission => {
+      const currentStatus = problemStatus.get(submission.problemId)
+      
+      // If problem is already marked as "solved", keep it that way
+      if (currentStatus === "solved") return
+      
+      // Mark as "solved" if accepted, otherwise as "attempted"
+      if (submission.status === "Accepted") {
+        problemStatus.set(submission.problemId, "solved")
+      } else if (currentStatus !== "solved") {
+        problemStatus.set(submission.problemId, "attempted")
+      }
+    })
+
+    // Add status property to each problem
+    const problemsWithStatus = problems.map(problem => ({
+      ...problem,
+      status: problemStatus.get(problem.id) || "unsolved"
+    }))
+
     const totalProblems = await prisma.problem.count()
     const totalPages = Math.ceil(totalProblems / limit)
 
     return NextResponse.json({
-      problems,
+      problems: problemsWithStatus,
       page,
       totalPages,
-      totalProblems
+      totalProblems,
     })
   } catch (error) {
     console.error('Failed to fetch problems:', error)

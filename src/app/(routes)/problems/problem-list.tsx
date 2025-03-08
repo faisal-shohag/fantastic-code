@@ -24,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useSession } from 'next-auth/react'
+import { CheckCircle, CircleMinus } from 'lucide-react'
 
 interface Problem {
   id: number
@@ -33,23 +35,12 @@ interface Problem {
   difficulty: string
   tags: { tag: { name: string } }[]
   companies: { company: { name: string } }[]
+  status?: string
 }
 
 interface PaginatedResponse {
   problems: Problem[]
   totalPages: number
-}
-
-const fetchProblems: QueryFunction<PaginatedResponse, [string, number]> = async ({ 
-  queryKey 
-}) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, page] = queryKey
-  const response = await fetch(`/api/problems?page=${page}&limit=10`)
-  if (!response.ok) {
-    throw new Error('Network response was not ok')
-  }
-  return response.json()
 }
 
 const difficultyColor = {
@@ -59,26 +50,52 @@ const difficultyColor = {
 }
 
 export default function ProblemListTable() {
+  const session = useSession()
+  const userId = session.data?.user?.id
+  
   const [page, setPage] = useState(1)
-  const { data, error, isLoading } = useQuery(['problems', page], fetchProblems, {
-    keepPreviousData: true,
-  })
+  
+  // Create a custom fetchProblems function that includes the userId
+  const fetchProblems: QueryFunction<PaginatedResponse, [string, number, string | undefined]> = async ({ 
+    queryKey 
+  }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, page, userId] = queryKey
+    const userIdParam = userId ? `&userId=${userId}` : '';
+    const response = await fetch(`/api/problems?page=${page}&limit=10${userIdParam}`)
+    if (!response.ok) {
+      throw new Error('Network response was not ok')
+    }
+    return response.json()
+  }
+  
+  // Pass userId to the query key
+  const { data, error, isLoading } = useQuery(
+    ['problems', page, userId], 
+    fetchProblems, 
+    {
+      keepPreviousData: true,
+      // Only enable the query if we have a userId or if we're not authenticated (for guest viewing)
+      enabled: session.status !== 'loading',
+    }
+  )
 
   const problems = data?.problems || []
   const totalPages = data?.totalPages || 1
+  // console.log(problems)
 
   return (
-    <div className=" mx-auto p-4 min-h-screen">
+    <div className="mx-auto p-4 min-h-screen">
       <Card className="shadow-lg">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Serial</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Tags</TableHead>
-                {/* <TableHead className="text-right">Action</TableHead> */}
+                <TableHead className='border-r'>Status</TableHead>
+                <TableHead className='border-r'>Title</TableHead>
+                <TableHead className='border-r'>Difficulty</TableHead>
+                <TableHead >Tags</TableHead>
+                
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -95,10 +112,22 @@ export default function ProblemListTable() {
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <TableCell className="font-medium border">{problem.serial}</TableCell>
+                         <TableCell className=" border-b">
+                          {problem.status == "solved" && (
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
+
+{problem.status == "attempted" && (
+                            <div className="flex items-center">
+                              <CircleMinus className="w-5 h-5 text-yellow-500" />
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className='border'>
                           <Link href={`/problems/${problem.unique_title}`} className="hover:text-indigo-600 transition-colors">
-                            {problem.title}
+                          {problem.serial}. {problem.title}
                           </Link>
                         </TableCell>
                         <TableCell className='border'>
@@ -120,11 +149,7 @@ export default function ProblemListTable() {
                             )}
                           </div>
                         </TableCell>
-                        {/* <TableCell className="text-right border">
-                          <Button variant="outline" size="sm" className="text-indigo-600 border-indigo-600 hover:bg-indigo-50">
-                            Solve <ChevronRight className="ml-2 w-4 h-4" />
-                          </Button>
-                        </TableCell> */}
+                     
                       </motion.tr>
                     ))}
               </AnimatePresence>
@@ -142,10 +167,6 @@ export default function ProblemListTable() {
       )}
 
       <div className="flex items-center justify-between mt-4">
-        {/* <div className="flex items-center space-x-2">
-          <Trophy className="w-4 h-4 text-yellow-500" />
-          <span className="text-sm text-gray-600">+50 XP per solved problem</span>
-        </div> */}
         <Pagination>
           <PaginationContent>
             <PaginationItem>
@@ -191,9 +212,8 @@ function TableRowSkeleton() {
         </div>
       </TableCell>
       <TableCell className="text-right">
-        <div className="h-8 bg-gray-200 rounded w-24 ml-auto" />
+        <div className="h-5 bg-gray-200 rounded w-16 ml-auto" />
       </TableCell>
     </TableRow>
   )
 }
-
