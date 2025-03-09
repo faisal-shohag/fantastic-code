@@ -12,17 +12,46 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { FaLightbulb } from "react-icons/fa6";
+import { CheckCircle, CircleMinus } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@radix-ui/react-avatar";
+
 
 export default function ProblemPage() {
   const { problem, isLoading, error } = useProblem();
   if (isLoading) return <SingleProblemSkeleton />;
   if (error || !problem) return <ProblemError />;
-
+  console.log(problem)
   return (
-    <div className="h-full   pb-20 px-5 pt-3">
+    <div className="h-full pb-20 px-5 pt-3 ">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{problem.title}</h1>
-        <DifficultyBadge difficulty={problem.difficulty} />
+        <div className="flex items-center gap-1">
+          <h1 className="text-xs text-muted-foreground">Contributed by: </h1>
+          <Avatar className="h-5 w-5">
+            <AvatarImage src={problem.author.image} />
+            <AvatarFallback className="text-xs">{problem.author.name[0]}</AvatarFallback>
+          </Avatar>
+
+          <h3 className="text-xs">{problem.author.name}</h3>
+        </div>
+        <div className="flex gap-3 items-center">
+        <span>    <DifficultyBadge difficulty={problem.difficulty} /> </span>
+        {problem.status == "solved" && (
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
+
+{problem.status == "attempted" && (
+                            <div className="flex items-center">
+                              <CircleMinus className="w-5 h-5 text-yellow-500" />
+                            </div>
+                          )}
+
+                         
+        </div>
+    
         <ProblemTags tags={problem.tags} />
       </div>
 

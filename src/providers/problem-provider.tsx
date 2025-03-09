@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react'
 import { useQuery } from 'react-query'
 import { ProblemData } from '@/lib/types'
+import { useSession } from 'next-auth/react'
 
 interface ProblemContextType {
   problem: ProblemData | undefined
@@ -23,8 +24,8 @@ export const useProblem = () => {
 
 
 
-const fetchProblem = async (problemId: string): Promise<ProblemData> => {
-  const response = await fetch(`/api/problems/${problemId}`)
+const fetchProblem = async (problemId: string, userId:string|undefined): Promise<ProblemData> => {
+  const response = await fetch(`/api/problems/${problemId}?userId=${userId}`)
  
   if (!response.ok) {
     throw new Error('Failed to fetch problem')
@@ -33,12 +34,15 @@ const fetchProblem = async (problemId: string): Promise<ProblemData> => {
 }
 
 export function ProblemProvider({ children, problemId }) {
+  const session = useSession()
+  const userId = session.data?.user?.id
   const { data, error, isLoading, refetch } = useQuery<ProblemData, Error>(
     ['problem', problemId],
-    () => fetchProblem(problemId),
+    () => fetchProblem(problemId, userId),
     {
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      enabled: !!problemId && !!userId
     }
   )
 

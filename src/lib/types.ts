@@ -24,13 +24,14 @@ export interface ProblemData {
   author: {
     id: string
     name: string
-    image: string | null
+    image: string
   }
   stats: {
     likes: number
     comments: number
     submissions: number
   }
+  status: string,
 }
 
 

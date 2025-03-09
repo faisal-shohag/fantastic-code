@@ -42,6 +42,9 @@ type PrismaResponse = Problem & {
   }
 }
 
+// Define possible status values
+type ProblemStatus = 'solved' | 'attempted' | 'unsolved' | null
+
 // Define the transformed response type
 interface TransformedProblem {
   id: number
@@ -83,6 +86,7 @@ interface TransformedProblem {
     output: string
     type: string
   }>
+  status: ProblemStatus
 }
 
 export async function GET(
@@ -94,7 +98,11 @@ export async function GET(
     if (!name) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
-  
+    
+    // Get userId from searchParams
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    
     try {
       const problem = await prisma.problem.findUnique({
         where: {
@@ -150,6 +158,35 @@ export async function GET(
       if (!problem) {
         return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
       }
+      
+      // Determine the problem status based on user submissions
+      let status: ProblemStatus = null
+      
+      if (userId) {
+        status = 'unsolved' // Default to unsolved if userId exists
+        
+        const submissions = await prisma.submissions.findMany({
+          where: {
+            problemId: problem.id,
+            userId: userId
+          },
+          orderBy: {
+            date: 'desc'
+          }
+        })
+
+        console.log(problem.id)
+        console.log(userId)
+
+        console.log(submissions)
+        
+        if (submissions.length > 0) {
+          // Check if any submission has an "Accepted" status
+          const hasSolved = submissions.some(submission => submission.status === 'Accepted')
+          
+          status = hasSolved ? 'solved' : 'attempted'
+        }
+      }
   
       const transformedProblem: TransformedProblem = {
         id: problem.id,
@@ -173,9 +210,9 @@ export async function GET(
           likes: problem._count.likes,
           comments: problem._count.comments,
           submissions: problem._count.submissions,
-        }
+        },
+        status: status
       }
-
   
       return NextResponse.json(transformedProblem)
     } catch (error) {
@@ -183,5 +220,3 @@ export async function GET(
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }
-
-

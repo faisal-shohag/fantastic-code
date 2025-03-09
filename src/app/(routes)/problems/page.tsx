@@ -2,7 +2,7 @@ import ProblemList from "./problem-list";
 
 const Problems = () => {
     return (
-        <div>
+        <div className="container mx-auto">
             <ProblemList/>
         </div>
     );
