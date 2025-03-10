@@ -24,7 +24,10 @@ export async function POST(req: Request) {
       companies,
       hints,
       testCases,
-      authorId
+      authorId,
+      isPublish,
+      bn_description,
+
     } = body
 
     // Validate required fields
@@ -59,6 +62,8 @@ export async function POST(req: Request) {
         difficulty,
         func,
         defaultCode,
+        isPublish,
+        bn_description,
         author: { connect: { id: authorId } },
         tags: {
           create: tags.map((name: string) => ({

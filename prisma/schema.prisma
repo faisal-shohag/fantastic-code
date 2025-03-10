@@ -32,6 +32,8 @@ model Problem {
   submissions  Submissions[]
   tags         TagsOnProblems[]
   TestCases    TestCase[]
+  isPublish    Boolean @default(false)
+  bn_description String?
 }
 
 model Tag {

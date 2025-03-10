@@ -7,7 +7,7 @@ import {
   CustomSelectTrigger,
   CustomSelectValue,
 } from "@/components/ui/custom-select";
-import { BiLogoJavascript, BiLogoPython } from "react-icons/bi";
+import { BiLogoJavascript } from "react-icons/bi";
 import { CgFormatLeft } from "react-icons/cg";
 import { GoBookmarkFill } from "react-icons/go";
 import { GrRotateLeft } from "react-icons/gr";
@@ -39,11 +39,11 @@ export default function EditorHeader({ language, setLanguageHandler }) {
           </CustomSelectTrigger>
           <CustomSelectContent>
             <CustomSelectGroup>
-              <CustomSelectItem value="python">
+              {/* <CustomSelectItem value="python">
                 <span className="flex items-center gap-1 text-xs">
                   <BiLogoPython size={18} className="text-[#2b5b84]" /> Python
                 </span>
-              </CustomSelectItem>
+              </CustomSelectItem> */}
               <CustomSelectItem value="javascript">
                 <span className="flex items-center gap-1 text-xs">
                   <BiLogoJavascript className="text-yellow-500" /> JavaScript
