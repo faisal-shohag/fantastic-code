@@ -175,10 +175,7 @@ export async function GET(
           }
         })
 
-        console.log(problem.id)
-        console.log(userId)
-
-        console.log(submissions)
+       
         
         if (submissions.length > 0) {
           // Check if any submission has an "Accepted" status

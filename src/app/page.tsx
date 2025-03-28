@@ -1,15 +1,18 @@
 "use client";
 
-import { BorderTrail } from "@/components/ui/border-trail";
-import { TextLoop } from "@/components/ui/text-loop";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import Hero from "@/components/home/hero";
+// import { BorderTrail } from "@/components/ui/border-trail";
+// import { TextLoop } from "@/components/ui/text-loop";
+// import { ChevronRight } from "lucide-react";
 
 
 export default function Home() {
   return (
-    <div className="flex flex-col justify-center items-center h-[400px]">
-      <div className="relative">
+    <div className="">
+
+      <Hero/>
+
+      {/* <div className="relative">
         <div className="flex items-center gap-1 absolute top-2 left-2">
           <div className="h-3 w-3 rounded-full bg-red-500"></div>
           <div className="h-3 w-3 rounded-full bg-orange-500"></div>
@@ -43,7 +46,7 @@ export default function Home() {
       </Link>
         </div>
       </div>
-    </div>
+    </div> */}
    
     </div>
   );

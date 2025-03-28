@@ -8,6 +8,13 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+	container: {
+		center: true,
+		padding: '2rem',
+		screens: {
+			'2xl': '1400px'
+		},
+	},
   	extend: {
   		colors: {
   			background: 'hsl(var(--background))',
@@ -49,8 +56,17 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+			  js: {
+				yellow: '#F7DF1E',
+				dark: '#323330',
+				light: '#F9F9F9',
+				orange: '#F97316',
+				purple: '#6E59A5',
+				blue: '#1EAEDB'
+			},
   		},
+		  
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -72,14 +88,34 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+			'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1', transform: 'translateY(0)' },
+					'100%': { opacity: '0', transform: 'translateY(10px)' }
+				},
+				'slide-in': {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(0)' }
+				},
+				float: {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+			'fade-in': 'fade-in 0.5s ease-out forwards',
+				'fade-out': 'fade-out 0.5s ease-out forwards',
+				'slide-in': 'slide-in 0.5s ease-out forwards',
+				'float': 'float 4s ease-in-out infinite'
   		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
-};
+} satisfies Config;
 export default config;

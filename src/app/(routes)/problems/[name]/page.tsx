@@ -21,7 +21,7 @@ export default function ProblemPage() {
   const { problem, isLoading, error } = useProblem();
   if (isLoading) return <SingleProblemSkeleton />;
   if (error || !problem) return <ProblemError />;
-  console.log(problem)
+  // console.log(problem)
   return (
     <div className="h-full pb-20 px-5 pt-3 ">
       <div className="space-y-2">

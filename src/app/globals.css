@@ -86,6 +86,9 @@ body {
   }
 }
 
+
+
+
 @layer base {
   * {
     @apply border-border;
@@ -95,12 +98,21 @@ body {
   }
 }
 
+
 .section {
   max-width: 1280px;
   margin: 0 auto;
   @apply pl-1 pr-1
   /* text-align: center; */
   /* height: 100vh; */;
+}
+
+.code-gradient {
+  @apply bg-gradient-to-r from-js-purple via-js-blue to-js-orange bg-clip-text text-transparent;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
 }
 
 
@@ -190,3 +202,12 @@ code[class*="language-"] {
   word-wrap: break-word !important;
   word-break: break-all !important;
 }
+
+
+
+.hero-pattern {
+  @apply dark:bg-zinc-900;
+  /* background-image: radial-gradient(#6E59A5 0.5px, #FFFFFF 0.5px); */
+  background-size: 10px 10px;
+}
+
