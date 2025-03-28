@@ -15,10 +15,10 @@ const Hero = () => {
               </div>
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 dark:text-gray-300 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl">
                 <span className="block">Master JavaScript.</span>
-                <span className="block code-gradient">Build Your Future.</span>
+                <span className="block code-gradient">Sharpen your JS Skills!</span>
               </h1>
               <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-                From JavaScript basics to advanced MERN stack development, start your journey to becoming a complete web developer with interactive exercises, coding challenges, and a personalized learning path.
+              Embark on Your JavaScript Adventure! Kickstart your journey as a beginner by tackling essential problems and transforming yourself into a confident JS developer, primed for success. Master the fundamentals of JavaScript—your key to unlocking any framework—before diving into advanced challenges that sharpen your skills. Follow our expertly crafted roadmap and ignite your learning journey today!
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <div className="flex flex-col sm:flex-row sm:justify-center lg:justify-start gap-3">

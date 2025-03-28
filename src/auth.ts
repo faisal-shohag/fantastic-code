@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, session, trigger }): Promise<JWT> {
-      if (trigger === "update" && session?.name) {
+      if (trigger === "update" && session?.username) {
         token.name = session.name
         token.username = session.username
         token.image = session.image
@@ -30,10 +30,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         return {
           ...token,
-          id: user.id,
-          // role: user.role,
-          // coverPhoto: user.coverPhoto,
-        //   username: user.username,
+          id: user.id as string,
+          username: user.username,
           image: user.image,
         }
       }
@@ -46,9 +44,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ...session.user,
           id: token.id as string,
           image: token.image as string,
-          // role: token.role,
-          // coverPhoto: token.coverPhoto,
-          // username: token.username,
+          username: token.username as string |null,
         }
       }
       return session
